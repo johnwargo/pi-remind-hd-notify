@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """*****************************************************************************************************************
     Pi Remind HD Notify
-    Created April 4m 2020.
+    Created April 4, 2020.
     By John M. Wargo (https://www.johnwargo.com)
 
     This application connects to a Google Calendar and determines whether there are any appointments in the next
@@ -15,7 +15,7 @@
     Google Calendar example code: https://developers.google.com/google-apps/calendar/quickstart/python
 ********************************************************************************************************************"""
 
-# todo: figure out how to use the virtual environment
+
 # todo: install required modules
 # todo: Add configurable option for ignoring tentative appointments
 
@@ -94,6 +94,9 @@ FAILURE_COLOR = RED
 # the app will leave the light red while checking. Setting it to green if
 # successful.
 has_error = False
+
+# create a variable to track the current status of the remote notify device.
+remote_notify_status = 0
 
 
 def display_text(message, color=WHITE):
