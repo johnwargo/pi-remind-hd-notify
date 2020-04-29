@@ -60,7 +60,7 @@ SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 calendar = None
 particle = None
 
-# whether or not you have a remote notify device connected. Use the config file to set
+# whether or not you have a remote notify device connected. Use the config file to override
 use_remote_notify = False
 
 
@@ -161,7 +161,6 @@ def main():
                 and config.use_reboot_counter and config.reboot_counter_limit and config.use_remote_notify:
             # Set our global variables
             use_remote_notify = config.use_remote_notify
-            # use_reboot_counter = config.use_reboot_counter
         else:
             print('One or more settings are missing from the project configuration file')
             print(CONFIG_ERROR_STR)
