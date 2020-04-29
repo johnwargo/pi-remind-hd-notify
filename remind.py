@@ -24,6 +24,7 @@ import unicorn_hat as unicorn
 
 #  Other imports
 import datetime
+import logging
 import math
 import os
 import socket
@@ -94,9 +95,9 @@ def processing_loop():
             if next_event is not None:
                 num_minutes = next_event['num_minutes']
                 if num_minutes != 1:
-                    print('Starts in {} minutes\n'.format(num_minutes))
+                    logging.info('Starts in {} minutes\n'.format(num_minutes))
                 else:
-                    print('Starts in 1.0 minute\n')
+                    logging.info('Starts in 1.0 minute\n')
                 # is the appointment between 10 and 5 minutes from now?
                 if num_minutes >= FIRST_THRESHOLD:
                     # Flash the lights in WHITE
@@ -140,34 +141,36 @@ def processing_loop():
 def main():
     global calendar, particle, use_remote_notify
 
+    logging.basicConfig(level=logging.DEBUG)
+
     # tell the user what we're doing...
-    print('\n')
-    print(HASHES)
-    print(HASH, 'Pi Remind HD Notify                      ', HASH)
-    print(HASH, 'By John M. Wargo (https://johnwargo.com) ', HASH)
-    print(HASHES)
-    print(PROJECT_URL)
+    logging.info('\n')
+    logging.info(HASHES)
+    logging.info(HASH, 'Pi Remind HD Notify                      ', HASH)
+    logging.info(HASH, 'By John M. Wargo (https://johnwargo.com) ', HASH)
+    logging.info(HASHES)
+    logging.info(PROJECT_URL)
 
     # Read the config file contents
     # https://martin-thoma.com/configuration-files-in-python/
+    logging.info('Opening project configuration file (config.json)')
     with open("config.json") as json_data_file:
         config = json.load(json_data_file)
     #  does the config exist (non-empty)?
     if config:
-        # TODO: remove for production
-        print(config)
+        logging.debug(config)
 
         if config.access_token and config.device_id and config.ignore_tentative_appointments \
                 and config.use_reboot_counter and config.reboot_counter_limit and config.use_remote_notify:
             # Set our global variables
             use_remote_notify = config.use_remote_notify
         else:
-            print('One or more settings are missing from the project configuration file')
-            print(CONFIG_ERROR_STR)
+            logging.error('One or more settings are missing from the project configuration file')
+            logging.error(CONFIG_ERROR_STR)
             sys.exit(0)
     else:
-        print('Unable to read the configuration file')
-        print(CONFIG_ERROR_STR)
+        logging.error('Unable to read the configuration file')
+        logging.error(CONFIG_ERROR_STR)
         sys.exit(0)
 
     if use_remote_notify:
@@ -181,18 +184,18 @@ def main():
         calendar = GoogleCalendar(SEARCH_LIMIT, config.ignore_tentative_appointments,
                                   config.use_reboot_counter, config.reboot_retries)
     except Exception as e:
-        print('Unable to initialize Google Calendar API')
-        print('\nException type:', type(e))
-        print('Error:', sys.exc_info()[0])
+        logging.error('Unable to initialize Google Calendar API')
+        logging.error('\nException type:', type(e))
+        logging.error('Error:', sys.exc_info()[0])
         unicorn.set_all(unicorn.FAILURE_COLOR)
         time.sleep(5)
         unicorn.off()
         sys.exit(0)
 
     if config.use_reboot_counter:
-        print('Reboot enabled ({} retries)'.format(config.reboot_retries))
+        logging.info('Reboot enabled ({} retries)'.format(config.reboot_retries))
 
-    print('Application initialized\n')
+    logging.info('Application initialized\n')
 
     # flash some random LEDs just for fun...
     unicorn.flash_random(5, 0.5)
@@ -212,6 +215,6 @@ if __name__ == '__main__':
         # turn off all of the LEDs
         unicorn.off()
         # tell the user we're exiting
-        print('\nExiting application\n')
+        logging.info('\nExiting application\n')
         # exit the application
         sys.exit(0)
