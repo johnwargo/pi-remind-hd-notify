@@ -14,12 +14,14 @@
 
     Google Calendar example code: https://developers.google.com/google-apps/calendar/quickstart/python
 ********************************************************************************************************************"""
-# TODO: Add configurable option for ignoring tentative appointments
-# TODO: Clean up imports (in each file)
+# TODO: Clean up imports
 
 # This project's imports (local modules)
+from calendar import *
 from particle import *
-from unicorn_hat import *
+import status as status
+import unicorn_hat as unicorn
+
 #  Other imports
 import datetime
 import math
@@ -28,6 +30,7 @@ import socket
 import sys
 import time
 import pytz
+
 from dateutil import parser
 from googleapiclient.discovery import build
 from httplib2 import Http
@@ -43,6 +46,7 @@ except ImportError:
 HASH = '#'
 HASHES = '#############################################'
 PROJECT_URL = 'https://github.com/johnwargo/pi-remind-hd-notify'
+CONFIG_ERROR_STR = 'Please validate the contents of the config.json file before continuing'
 
 # Event search scope (searches this many minutes in the future for events). Increase this value to get reminders
 # earlier. The app displays WHITE lights from this limit up to FIRST_THRESHOLD
@@ -52,26 +56,20 @@ FIRST_THRESHOLD = 5  # minutes, WHITE lights before this
 # RED for anything less than (and including) the second threshold
 SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 
-# Reboot Options - Added this to enable users to reboot the pi after a certain number of failed retries.
-# I noticed that on power loss, the Pi looses connection to the network and takes a reboot after the network
-# comes back to fix it.
-REBOOT_COUNTER_ENABLED = False
-REBOOT_NUM_RETRIES = 10
-reboot_counter = 0  # counter variable, tracks retry events.
+# initialize the classes we'll use as globals
+calendar = None
+particle = None
 
-# JMW Added 20170414 to fix an issue when there's an error connecting to the
-# Google Calendar API. The app needs to track whether there's an existing
-# error through the process. If there is, then when checking again for entries
-# the app will leave the light red while checking. Setting it to green if
-# successful.
-has_error = False
-
-# create a variable to track the current status of the remote notify device.
-# make this a class property the app can check.
-remote_notify_status = 0
+# whether or not you have a remote notify device connected. Use the config file to set
+use_remote_notify = False
 
 
-def calendar_loop():
+def processing_loop():
+    global particle
+
+    # initialize the previous remote notify status
+    previous_status = -1
+
     # initialize the lastMinute variable to the current time to start
     last_minute = datetime.datetime.now().minute
     # on startup, just use the previous minute as lastMinute, that way the app
@@ -90,7 +88,8 @@ def calendar_loop():
             last_minute = current_minute
             # we've moved a minute, so we have work to do
             # get the next calendar event (within the specified time limit [in minutes])
-            next_event = get_next_event()
+            # next_event = calendar.get_next_event()
+            next_event = calendar.get_status()
             # do we get an event?
             if next_event is not None:
                 num_minutes = next_event['num_minutes']
@@ -101,33 +100,46 @@ def calendar_loop():
                 # is the appointment between 10 and 5 minutes from now?
                 if num_minutes >= FIRST_THRESHOLD:
                     # Flash the lights in WHITE
-                    unicorn.flash_all(1, 0.25, WHITE)
+                    unicorn.flash_all(1, 0.25, unicorn.WHITE)
                     # display the event summary
-                    unicorn.display_text(next_event['summary'], WHITE)
+                    unicorn.display_text(next_event['summary'], unicorn.WHITE)
                     # set the activity light to WHITE as an indicator
-                    unicorn.set_activity_light(WHITE, False)
+                    unicorn.set_activity_light(unicorn.WHITE, False)
                 # is the appointment less than 5 minutes but more than 2 minutes from now?
                 elif num_minutes > SECOND_THRESHOLD:
                     # Flash the lights YELLOW
-                    unicorn.flash_all(2, 0.25, YELLOW)
+                    unicorn.flash_all(2, 0.25, unicorn.YELLOW)
                     # display the event summary
-                    unicorn.display_text(next_event['summary'], YELLOW)
+                    unicorn.display_text(next_event['summary'], unicorn.YELLOW)
                     # set the activity light to YELLOw as an indicator
-                    unicorn.set_activity_light(YELLOW, False)
+                    unicorn.set_activity_light(unicorn.YELLOW, False)
                 else:
                     # hmmm, less than 2 minutes, almost time to start!
                     # swirl the lights. Longer every second closer to start time
                     unicorn.do_swirl(int((4 - num_minutes) * 50))
                     # display the event summary
-                    unicorn.display_text(next_event['summary'], ORANGE)
+                    unicorn.display_text(next_event['summary'], unicorn.ORANGE)
                     # set the activity light to SUCCESS_COLOR (green by default)
-                    unicorn.set_activity_light(ORANGE, False)
+                    unicorn.set_activity_light(unicorn.ORANGE, False)
+
+                # should we update a remote notify device?
+                if use_remote_notify:
+                    # get status from the results
+                    # TODO: Change this
+                    current_status = status.Status.BUSY
+                    # Only change the status if it's different than the current status
+                    if current_status != previous_status:
+                        # update the remote device status
+                        particle.set_status(current_status)
+
         # wait a second then check again
         # You can always increase the sleep value below to check less often
         time.sleep(1)
 
 
 def main():
+    global calendar, particle, use_remote_notify
+
     # tell the user what we're doing...
     print('\n')
     print(HASHES)
@@ -136,32 +148,65 @@ def main():
     print(HASHES)
     print(PROJECT_URL)
 
-    # Initialize the Particle Cloud object
-    particle = ParticleCloud()
-    if not particle.config_is_valid():
-        print('Particle Cloud configuration invalid or missing')
-        print('Please validate the contents of the config.py file before continuing')
-        # then exit, nothing else we can do here
+    # Read the config file contents
+    # https://martin-thoma.com/configuration-files-in-python/
+    with open("config.json") as json_data_file:
+        config = json.load(json_data_file)
+    #  does the config exist (non-empty)?
+    if config:
+        # TODO: remove for production
+        print(config)
+
+        if config.access_token and config.device_id and config.ignore_tentative_appointments \
+                and config.use_reboot_counter and config.reboot_counter_limit and config.use_remote_notify:
+            # Set our global variables
+            use_remote_notify = config.use_remote_notify
+            # use_reboot_counter = config.use_reboot_counter
+        else:
+            print('One or more settings are missing from the project configuration file')
+            print(CONFIG_ERROR_STR)
+            sys.exit(0)
+    else:
+        print('Unable to read the configuration file')
+        print(CONFIG_ERROR_STR)
         sys.exit(0)
 
-    if REBOOT_COUNTER_ENABLED:
-        print('Reboot enabled ({} retries)'.format(REBOOT_NUM_RETRIES))
+    if use_remote_notify:
+        # Initialize the Particle Cloud object
+        particle = ParticleCloud(config.access_token, config.device_id)
+        # turn the remote notify status LED off
+        particle.set_status(status.Status.OFF)
+
+    # Lets see if we can initialize the calendar
+    try:
+        calendar = GoogleCalendar(SEARCH_LIMIT, config.ignore_tentative_appointments,
+                                  config.use_reboot_counter, config.reboot_retries)
+    except Exception as e:
+        print('Unable to initialize Google Calendar API')
+        print('\nException type:', type(e))
+        print('Error:', sys.exc_info()[0])
+        unicorn.set_all(unicorn.FAILURE_COLOR)
+        time.sleep(5)
+        unicorn.off()
+        sys.exit(0)
+
+    if config.use_reboot_counter:
+        print('Reboot enabled ({} retries)'.format(config.reboot_retries))
 
     print('Application initialized\n')
 
     # flash some random LEDs just for fun...
     unicorn.flash_random(5, 0.5)
     # blink all the LEDs GREEN to let the user know the hardware is working
-    unicorn.flash_all(3, 0.10, GREEN)
+    unicorn.flash_all(3, 0.10, unicorn.GREEN)
 
-    calendar_loop()
+    processing_loop()
 
-
-# Initialize the Unicorn HAT
-unicorn = UnicornHAT()
 
 if __name__ == '__main__':
     try:
+        # Initialize the Unicorn HAT
+        unicorn.init()
         # do our stuff
         main()
     except KeyboardInterrupt:

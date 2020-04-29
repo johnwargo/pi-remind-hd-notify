@@ -20,20 +20,11 @@ class ParticleCloud:
     # device_id = ""
     # current_status = 0
 
-    def __init__(self):
-        # Read the config file contents
-        # https://martin-thoma.com/configuration-files-in-python/
-        with open("config.json") as json_data_file:
-            config = json.load(json_data_file)
-        # TODO: Pull this before publishing
-        print(config)
+    def __init__(self, access_token, device_id):
         # populate the Particle config options
-        self._access_token = config.ACCESS_TOKEN
-        self._device_id = config.DEVICE_ID
+        self._access_token = access_token
+        self._device_id = device_id
         self._status = 0
-
-    def config_is_valid(self):
-        return self._access_token and self._device_id
 
     def set_status(self, status):
         #  TODO Set local status value
@@ -75,22 +66,25 @@ class ParticleCloud:
         #     return -1
 
     def invoke_particle_cloud(self, verb_string, status):
-        url = PARTICLE_HOST + self.device_id + verb_string
-        if status:
-            body = "access_token={}&params={}".format(self.access_token, status)
-        else:
-            body = "access_token={}".format(self.access_token)
-        headers = {"Content-Type": "application/x-www-form-urlencoded",
-                   "Content-Length": len(body)}
-        try:
-            res = requests.post(url, headers=headers, data=body)
-            if res.status_code not in (200, 201):
-                print("Particle Cloud returned {}".format(res.status_code))
-                return -1
+        # Do we have the configuration settings we need?
+        # TODO: Add else
+        if self._access_token and self._device_id:
+            url = PARTICLE_HOST + self.device_id + verb_string
+            if status:
+                body = "access_token={}&params={}".format(self.access_token, status)
             else:
-                print(res)
-                return int(res.text)
-        except requests.exceptions.RequestException as e:
-            print("Exception attempting to connect to the Particle Cloud")
-            print(e.response.json())
-            return -1
+                body = "access_token={}".format(self.access_token)
+            headers = {"Content-Type": "application/x-www-form-urlencoded",
+                       "Content-Length": len(body)}
+            try:
+                res = requests.post(url, headers=headers, data=body)
+                if res.status_code not in (200, 201):
+                    print("Particle Cloud returned {}".format(res.status_code))
+                    return -1
+                else:
+                    print(res)
+                    return int(res.text)
+            except requests.exceptions.RequestException as e:
+                print("Exception attempting to connect to the Particle Cloud")
+                print(e.response.json())
+                return -1
