@@ -7,7 +7,6 @@
 # TODO: Clean up imports
 
 import requests
-import json
 
 PARTICLE_HOST = 'https://api.particle.io/v1/devices/'
 PARTICLE_VERB_1 = '/setStatus'
@@ -69,11 +68,11 @@ class ParticleCloud:
         # Do we have the configuration settings we need?
         # TODO: Add else
         if self._access_token and self._device_id:
-            url = PARTICLE_HOST + self.device_id + verb_string
+            url = PARTICLE_HOST + self._device_id + verb_string
             if status:
-                body = "access_token={}&params={}".format(self.access_token, status)
+                body = "access_token={}&params={}".format(self._access_token, status)
             else:
-                body = "access_token={}".format(self.access_token)
+                body = "access_token={}".format(self._access_token)
             headers = {"Content-Type": "application/x-www-form-urlencoded",
                        "Content-Length": len(body)}
             try:

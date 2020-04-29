@@ -15,19 +15,23 @@
     Google Calendar example code: https://developers.google.com/google-apps/calendar/quickstart/python
 ********************************************************************************************************************"""
 # TODO: Clean up imports
+from __future__ import print_function
 
 # This project's imports (local modules)
-from calendar import *
+# from google_calendar import *
+import google_calendar
 from particle import *
 import status as status
 import unicorn_hat as unicorn
 
 #  Other imports
 import datetime
+import json
 import logging
 import sys
 import time
 from oauth2client import client, file, tools
+
 try:
     import argparse
 
@@ -56,7 +60,7 @@ FIRST_THRESHOLD = 5  # minutes, WHITE lights before this
 SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 
 # initialize the classes we'll use as globals
-calendar = None
+google_calendar = None
 particle = None
 
 # whether or not you have a remote notify device connected. Use the config file to override
@@ -88,7 +92,7 @@ def processing_loop():
             # we've moved a minute, so we have work to do
             # get the next calendar event (within the specified time limit [in minutes])
             # next_event = calendar.get_next_event()
-            next_event = calendar.get_status()
+            next_event = google_calendar.get_status()
             # do we get an event?
             if next_event is not None:
                 num_minutes = next_event['num_minutes']
@@ -137,18 +141,18 @@ def processing_loop():
 
 
 def main():
-    global calendar, particle, use_remote_notify
+    global google_calendar, particle, use_remote_notify
 
     # logging.basicConfig(level=logging.INFO)
     logging.basicConfig(level=logging.DEBUG)
 
     # tell the user what we're doing...
-    logging.info('\n')
-    logging.info(HASHES)
-    logging.info(HASH, 'Pi Remind HD Notify                      ', HASH)
-    logging.info(HASH, 'By John M. Wargo (https://johnwargo.com) ', HASH)
-    logging.info(HASHES)
-    logging.info(PROJECT_URL)
+    print('\n')
+    print(HASHES)
+    print(HASH, 'Pi Remind HD Notify                      ', HASH)
+    print(HASH, 'By John M. Wargo (https://johnwargo.com) ', HASH)
+    print(HASHES)
+    print('Project: ' + PROJECT_URL + '\n')
 
     logging.info('Opening project configuration file (config.json)')
     # Read the config file contents
@@ -158,16 +162,32 @@ def main():
     #  does the config exist (non-empty)?
     if config:
         logging.debug('Validating configuration file')
-        logging.debug(config)
-        if config.access_token and config.device_id and config.ignore_tentative_appointments \
-                and config.use_reboot_counter and config.reboot_counter_limit and config.use_remote_notify:
-            logging.debug('Configuration is valid')
+        print(config)
+        print(config)
+
+        if config['access_token'] and config['device_id']:
+            logging.debug('Particle Configuration is valid')
+        else:
+            logging.error('One or more settings are missing from the project configuration file')
+            logging.error(CONFIG_ERROR_STR)
+            sys.exit(0)
+
+        if  config.ignore_tentative_appointments:
+            logging.debug('Calendar configuration is valid')
+        else:
+            logging.error('One or more settings are missing from the project configuration file')
+            logging.error(CONFIG_ERROR_STR)
+            sys.exit(0)
+
+        if config.use_reboot_counter and config.reboot_counter_limit and config.use_remote_notify:
+            logging.debug('Hardware configuration is valid')
             # Set our global variables
             use_remote_notify = config.use_remote_notify
         else:
             logging.error('One or more settings are missing from the project configuration file')
             logging.error(CONFIG_ERROR_STR)
             sys.exit(0)
+
     else:
         logging.error('Unable to read the configuration file')
         logging.error(CONFIG_ERROR_STR)
@@ -182,8 +202,8 @@ def main():
 
     # Lets see if we can initialize the calendar
     try:
-        calendar = GoogleCalendar(SEARCH_LIMIT, config.ignore_tentative_appointments,
-                                  config.use_reboot_counter, config.reboot_retries)
+        google_calendar = google_calendar.GoogleCalendar(SEARCH_LIMIT, config.ignore_tentative_appointments,
+                                         config.use_reboot_counter, config.reboot_retries)
     except Exception as e:
         logging.error('Unable to initialize Google Calendar API')
         logging.error('\nException type:', type(e))
