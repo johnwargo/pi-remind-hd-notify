@@ -25,24 +25,22 @@ import unicorn_hat as unicorn
 #  Other imports
 import datetime
 import logging
-import math
-import os
-import socket
 import sys
 import time
-import pytz
-
-from dateutil import parser
-from googleapiclient.discovery import build
-from httplib2 import Http
 from oauth2client import client, file, tools
-
 try:
     import argparse
 
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
 except ImportError:
     flags = None
+# import math
+# import os
+# import socket
+# import pytz
+# from dateutil import parser
+# from googleapiclient.discovery import build
+# from httplib2 import Http
 
 HASH = '#'
 HASHES = '#############################################'
@@ -141,6 +139,7 @@ def processing_loop():
 def main():
     global calendar, particle, use_remote_notify
 
+    # logging.basicConfig(level=logging.INFO)
     logging.basicConfig(level=logging.DEBUG)
 
     # tell the user what we're doing...
@@ -151,17 +150,18 @@ def main():
     logging.info(HASHES)
     logging.info(PROJECT_URL)
 
+    logging.info('Opening project configuration file (config.json)')
     # Read the config file contents
     # https://martin-thoma.com/configuration-files-in-python/
-    logging.info('Opening project configuration file (config.json)')
     with open("config.json") as json_data_file:
         config = json.load(json_data_file)
     #  does the config exist (non-empty)?
     if config:
+        logging.debug('Validating configuration file')
         logging.debug(config)
-
         if config.access_token and config.device_id and config.ignore_tentative_appointments \
                 and config.use_reboot_counter and config.reboot_counter_limit and config.use_remote_notify:
+            logging.debug('Configuration is valid')
             # Set our global variables
             use_remote_notify = config.use_remote_notify
         else:
@@ -174,6 +174,7 @@ def main():
         sys.exit(0)
 
     if use_remote_notify:
+        logging.info('Remote Notify Enabled')
         # Initialize the Particle Cloud object
         particle = ParticleCloud(config.access_token, config.device_id)
         # turn the remote notify status LED off
