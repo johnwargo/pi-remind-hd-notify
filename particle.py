@@ -1,30 +1,42 @@
-"""
-Particle Module
-
-Exposes methods to trigger Particle Cloud methods for the Remote Notify device
-"""
+###########################################################
+# Particle Module
+#
+# Exposes methods to trigger Particle Cloud methods for
+# the Remote Notify device
+###########################################################
+# TODO: Clean up imports
 
 import requests
-
-import config
+import json
 
 PARTICLE_HOST = 'https://api.particle.io/v1/devices/'
 PARTICLE_VERB_1 = '/setStatus'
 PARTICLE_VERB_2 = '/getStatus'
 
 
-class Particle:
-    access_token = ""
-    device_id = ""
+class ParticleCloud:
+
+    # access_token = ""
+    # device_id = ""
+    # current_status = 0
 
     def __init__(self):
-        access_token = config.ACCESS_TOKEN
-        device_id = config.DEVICE_ID
+        # Read the config file contents
+        # https://martin-thoma.com/configuration-files-in-python/
+        with open("config.json") as json_data_file:
+            config = json.load(json_data_file)
+        # TODO: Pull this before publishing
+        print(config)
+        # populate the Particle config options
+        self._access_token = config.ACCESS_TOKEN
+        self._device_id = config.DEVICE_ID
+        self._status = 0
 
     def config_is_valid(self):
-        return self.access_token and self.device_id
+        return self._access_token and self._device_id
 
     def set_status(self, status):
+        #  TODO Set local status value
         return self.invoke_particle_cloud(PARTICLE_VERB_1, status)
         # url = PARTICLE_HOST + self.device_id + PARTICLE_VERB_1
         # body = "access_token={}&params={}".format(self.access_token, status)

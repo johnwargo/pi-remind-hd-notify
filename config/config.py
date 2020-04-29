@@ -1,2 +1,4 @@
-ACCESS_TOKEN = "",
-DEVICE_ID = ""
+{
+    ACCESS_TOKEN: "",
+    DEVICE_ID: ""
+}
