@@ -13,7 +13,8 @@ import unicorn_hat as unicorn
 
 # other modules
 import datetime
-# import math
+import logging
+import math
 import os
 import socket
 import sys
@@ -50,7 +51,6 @@ class GoogleCalendar:
         _search_limit = search_limit
 
         # Initialize the Google Calendar API stuff
-        print('Initializing the Google Calendar API')
         # Google says: If modifying these scopes, delete your previously saved
         # credentials at ~/.credentials/client_secret.json
         # On the pi, it's in /root/.credentials/

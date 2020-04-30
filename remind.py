@@ -18,12 +18,10 @@
 from __future__ import print_function
 
 # This project's imports (local modules)
-# from google_calendar import *
 import google_calendar
 from particle import *
-import status as status
+from status import Status
 import unicorn_hat as unicorn
-
 #  Other imports
 import datetime
 import json
@@ -38,6 +36,7 @@ try:
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
 except ImportError:
     flags = None
+
 # import math
 # import os
 # import socket
@@ -60,26 +59,33 @@ FIRST_THRESHOLD = 5  # minutes, WHITE lights before this
 SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 # the config object properties, used to validate config
 CONFIG_PROPERTIES = ["access_token", "device_id", "ignore_tentative_appointments", "use_reboot_counter",
-                     "reboot_counter_limit", "use_remote_notify"]
+                     "reboot_counter_limit", "use_remote_notify", "debug_mode"]
 
 # initialize the classes we'll use as globals
 google_calendar = None
 particle = None
 
+debug_mode = False
 # whether or not you have a remote notify device connected. Use the config file to override
 use_remote_notify = False
+# whether to use the reboot counter
+# use_reboot_counter = False
+# Number of failed requests before the device reboots
+# reboot_counter_limit = 10
 
 
 def validate_config(config_object):
     # Returns a lit of missing attributes for the object
+    # These logging statements are info because debug won't be set until after
+    # the app validates the config file
     logging.debug('Validating configuration file')
     res = []
     for i, val in enumerate(CONFIG_PROPERTIES):
         try:
             prop = config_object[val]
-            logging.debug("Configuration property '{}' exists".format(val))
+            logging.info("Configuration property '{}' exists".format(val))
         except KeyError:
-            logging.debug("Configuration property '{}' missing".format(val))
+            logging.info("Configuration property '{}' missing".format(val))
             res.append(val)
     return len(res) < 1, ','.join(res)
 
@@ -158,10 +164,11 @@ def processing_loop():
 
 
 def main():
-    global google_calendar, particle, use_remote_notify
+    global debug_mode, google_calendar, particle, use_remote_notify
 
-    # logging.basicConfig(level=logging.INFO)
-    logging.basicConfig(level=logging.DEBUG)
+    # Setup the logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
 
     # tell the user what we're doing...
     print('\n')
@@ -180,12 +187,10 @@ def main():
     if config:
         valid_config, config_errors = validate_config(config)
         if valid_config:
-            logging.debug('Configuration file is valid')
-            # Check to see if the string values are populated
-            if len(config['access_token']) < 1 or len(config['device_id']) < 1:
-                logging.error('One or more values are missing from the project configuration file')
-                logging.error(CONFIG_ERROR_STR)
-                sys.exit(0)
+            logging.info('Configuration file is valid')
+            use_remote_notify = config['use_remote_notify']
+            use_reboot_counter = config['use_reboot_counter']
+            reboot_counter_limit = config['reboot_counter_limit']
         else:
             logging.error('The configuration file is missing one or more properties')
             logging.error('Missing values: ' + config_errors)
@@ -196,17 +201,38 @@ def main():
         logging.error(CONFIG_ERROR_STR)
         sys.exit(0)
 
+    debug_mode = config['debug_mode']
+    if debug_mode:
+        logging.info('Enabling debug mode')
+        logger.setLevel(logging.DEBUG)
+
     if use_remote_notify:
         logging.info('Remote Notify Enabled')
+        access_token = config['access_token']
+        device_id = config['device_id']
+        # Check to see if the string values are populated
+        if len(access_token) < 1 or len(device_id) < 1:
+            logging.error('One or more values are missing from the project configuration file')
+            logging.error(CONFIG_ERROR_STR)
+            sys.exit(0)
         # Initialize the Particle Cloud object
-        particle = ParticleCloud(config.access_token, config.device_id)
-        # turn the remote notify status LED off
-        particle.set_status(status.Status.OFF)
+        logging.debug('Creating Particle object')
+        particle = ParticleCloud(access_token, device_id)
 
-    logging.debug('Initializing Google Calendar interface')
+        # if debug_mode:
+        #     particle.set_status(Status.BUSY)
+        #     time.sleep(3)
+        # turn the remote notify status LED off
+        logging.debug('Setting Remote Notify status to Off')
+        particle.set_status(Status.OFF)
+
+    if use_reboot_counter:
+        logging.info('Reboot enabled ({} retries)'.format(reboot_counter_limit))
+
+    logging.info('Initializing Google Calendar interface')
     try:
         google_calendar = google_calendar.GoogleCalendar(SEARCH_LIMIT, config.ignore_tentative_appointments,
-                                                         config.use_reboot_counter, config.reboot_retries)
+                                                         use_reboot_counter, reboot_counter_limit)
     except Exception as e:
         logging.error('Unable to initialize Google Calendar API')
         logging.error('Exception type: {}'.format(type(e)))
@@ -215,9 +241,6 @@ def main():
         time.sleep(5)
         unicorn.off()
         sys.exit(0)
-
-    if config.use_reboot_counter:
-        logging.info('Reboot enabled ({} retries)'.format(config.reboot_retries))
 
     logging.info('Application initialized\n')
 
