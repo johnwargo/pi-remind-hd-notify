@@ -162,13 +162,10 @@ def main():
     #  does the config exist (non-empty)?
     if config:
         logging.debug('Validating configuration file')
-        print(config)
-        print(config)
-
         if config['access_token'] and config['device_id']:
             logging.debug('Particle Configuration is valid')
         else:
-            logging.error('One or more settings are missing from the project configuration file')
+            logging.error('XXXXOne or more settings are missing from the project configuration file')
             logging.error(CONFIG_ERROR_STR)
             sys.exit(0)
 
