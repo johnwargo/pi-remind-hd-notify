@@ -210,5 +210,5 @@ def flash_random(flash_count, delay, between_delay=0):
             time.sleep(between_delay)
 
 
-def off(self):
+def off():
     unicornhathd.off()

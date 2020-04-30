@@ -58,6 +58,9 @@ SEARCH_LIMIT = 10  # minutes
 FIRST_THRESHOLD = 5  # minutes, WHITE lights before this
 # RED for anything less than (and including) the second threshold
 SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
+# the config object properties, used to validate config
+CONFIG_PROPERTIES = ["access_token", "device_id", "ignore_tentative_appointments", "use_reboot_counter",
+                     "reboot_counter_limit", "use_remote_notify"]
 
 # initialize the classes we'll use as globals
 google_calendar = None
@@ -65,6 +68,20 @@ particle = None
 
 # whether or not you have a remote notify device connected. Use the config file to override
 use_remote_notify = False
+
+
+def validate_config(config_object):
+    # Returns a lit of missing attributes for the object
+    logging.debug('Validating configuration file')
+    res = []
+    for i, val in enumerate(CONFIG_PROPERTIES):
+        try:
+            prop = config_object[val]
+            logging.debug("Configuration property '{}' exists".format(val))
+        except KeyError:
+            logging.debug("Configuration property '{}' missing".format(val))
+            res.append(val)
+    return len(res) < 1, ','.join(res)
 
 
 def processing_loop():
@@ -161,30 +178,19 @@ def main():
         config = json.load(json_data_file)
     #  does the config exist (non-empty)?
     if config:
-        logging.debug('Validating configuration file')
-        if config['access_token'] and config['device_id']:
-            logging.debug('Particle Configuration is valid')
+        valid_config, config_errors = validate_config(config)
+        if valid_config:
+            logging.debug('Configuration file is valid')
+            # Check to see if the string values are populated
+            if len(config['access_token']) < 1 or len(config['device_id']) < 1:
+                logging.error('One or more values are missing from the project configuration file')
+                logging.error(CONFIG_ERROR_STR)
+                sys.exit(0)
         else:
-            logging.error('XXXXOne or more settings are missing from the project configuration file')
+            logging.error('The configuration file is missing one or more properties')
+            logging.error('Missing values: ' + config_errors)
             logging.error(CONFIG_ERROR_STR)
             sys.exit(0)
-
-        if  config.ignore_tentative_appointments:
-            logging.debug('Calendar configuration is valid')
-        else:
-            logging.error('One or more settings are missing from the project configuration file')
-            logging.error(CONFIG_ERROR_STR)
-            sys.exit(0)
-
-        if config.use_reboot_counter and config.reboot_counter_limit and config.use_remote_notify:
-            logging.debug('Hardware configuration is valid')
-            # Set our global variables
-            use_remote_notify = config.use_remote_notify
-        else:
-            logging.error('One or more settings are missing from the project configuration file')
-            logging.error(CONFIG_ERROR_STR)
-            sys.exit(0)
-
     else:
         logging.error('Unable to read the configuration file')
         logging.error(CONFIG_ERROR_STR)
@@ -197,14 +203,14 @@ def main():
         # turn the remote notify status LED off
         particle.set_status(status.Status.OFF)
 
-    # Lets see if we can initialize the calendar
+    logging.debug('Initializing Google Calendar interface')
     try:
         google_calendar = google_calendar.GoogleCalendar(SEARCH_LIMIT, config.ignore_tentative_appointments,
-                                         config.use_reboot_counter, config.reboot_retries)
+                                                         config.use_reboot_counter, config.reboot_retries)
     except Exception as e:
         logging.error('Unable to initialize Google Calendar API')
-        logging.error('\nException type:', type(e))
-        logging.error('Error:', sys.exc_info()[0])
+        logging.error('Exception type: {}'.format(type(e)))
+        logging.error('Error: {}'.format(sys.exc_info()[0]))
         unicorn.set_all(unicorn.FAILURE_COLOR)
         time.sleep(5)
         unicorn.off()
