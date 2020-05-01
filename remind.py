@@ -146,6 +146,7 @@ def processing_loop():
                     # Only change the status if it's different than the current status
                     if current_status != previous_status:
                         # update the remote device status
+                        previous_status = current_status
                         particle.set_status(current_status)
 
         # wait a second then check again
@@ -157,8 +158,14 @@ def main():
     global debug_mode, cal, particle, use_remote_notify
 
     # Setup the logger
+    # TODO: omit milliseconds from time value
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
     # tell the user what we're doing...
     print('\n')

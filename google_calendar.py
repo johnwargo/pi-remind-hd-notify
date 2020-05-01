@@ -18,11 +18,9 @@ import os
 import socket
 import sys
 import time
-
 import pytz
 from dateutil import parser
 from httplib2 import Http
-# from oauth2client import client, file, tools
 
 # Google Calendar libraries
 import datetime
@@ -30,6 +28,20 @@ import pickle
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+
+# ========================================================================================
+# Borrowed from: https://github.com/pimoroni/unicorn-hat-hd/blob/master/examples/text.py
+# ========================================================================================
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError:
+    exit("This script requires the pillow module\nInstall with: sudo pip install pillow")
+
+# Use `fc-list` to show a list of installed fonts on your system,
+# or `ls /usr/share/fonts/` and explore.
+
+FONT = ("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 12)
+# =============================================================================
 
 reboot_counter = 0
 
@@ -57,44 +69,47 @@ class GoogleCalendar:
     _search_limit = 10
 
     def __init__(self, search_limit, ignore_tentative_appointments, use_reboot_counter, reboot_counter_limit):
-        _ignore_tentative_appointments = ignore_tentative_appointments
-        _use_reboot_counter = use_reboot_counter
-        _reboot_counter_limit = reboot_counter_limit
-        _search_limit = search_limit
+        # Populate the local properties
+        self._ignore_tentative_appointments = ignore_tentative_appointments
+        self._use_reboot_counter = use_reboot_counter
+        self._reboot_counter_limit = reboot_counter_limit
+        self._search_limit = search_limit
+        # Tell users what's happening
+        logging.info('Calendar Initialization')
+        logging.info('Calendar: Ignore Tentative: {}'.format(self._ignore_tentative_appointments))
+        logging.info('Calendar: Reboot Counter: {}'.format(self._use_reboot_counter))
+        logging.info('Calendar: Reboot Counter Limit: {}'.format(self._reboot_counter_limit))
+        logging.info('Calendar: Search Limit: {}'.format(self._search_limit))
 
-        # logging.getLogger('googleapicliet.discovery_cache').setLevel(logging.ERROR)
+        # Turn off logging of specific warnings
+        logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+
         creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        # logging.debug('Checking token.pickle')
         if os.path.exists('token.pickle'):
             # logging.debug('Token file exists')
             with open('token.pickle', 'rb') as token:
                 creds = pickle.load(token)
-        # logging.debug('checking creds')
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                # logging.debug('creds are valid')
                 flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-                # logging.debug('running local server')
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            # logging.debug('Save the credentials')
             with open('token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
         logging.debug('Initializing calendar service')
         self._service = build('calendar', 'v3', credentials=creds)
-
         # Set the timeout for the rest of the Google API calls.
         # need this at its default (infinity, i think) during the registration process.
         socket.setdefaulttimeout(5)  # seconds
 
     @staticmethod
-    def _has_reminder(self, event):
+    def _has_reminder(event):
         # Return true if there's a reminder set for the event
         # First, check to see if there is a default reminder set
         # Yes, I know I could have done this and the next check without using variables
@@ -120,7 +135,7 @@ class GoogleCalendar:
         global reboot_counter
         # modified from https://developers.google.com/google-apps/calendar/quickstart/python
         # get all of the events on the calendar from now through 10 minutes from now
-        print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'Getting next event')
+        logging.info('Getting next event')
         # this 'now' is in a different format (UTC)
         now = datetime.datetime.utcnow()
         # Calculate a time search_limit from now
@@ -130,7 +145,7 @@ class GoogleCalendar:
         if not self._has_error:
             # turn on a sequential CHECKING_COLOR LED to show that you're requesting data from the Google Calendar API
             unicorn.set_activity_light(unicorn.CHECKING_COLOR, True)
-        try:
+            # try:
             # ask Google for the calendar entries
             events_result = self._service.events().list(
                 # get all of them between now and 10 minutes from now
@@ -150,7 +165,7 @@ class GoogleCalendar:
             # did we get a return value?
             if not event_list:
                 # no? Then no upcoming events at all, so nothing to do right now
-                print(datetime.datetime.now(), 'No entries returned')
+                logging.info('No entries returned')
                 return None
             else:
                 # what time is it now?
@@ -171,37 +186,37 @@ class GoogleCalendar:
                             if self._has_reminder(event):
                                 # no? So we can use it
                                 event_summary = event['summary'] if 'summary' in event else 'No Title'
-                                print('Found event:', event_summary)
-                                print('Event starts:', start)
+                                logging.info('Found event: {}'.format(event_summary))
+                                logging.info('Event starts: {}'.format(start))
                                 # figure out how soon it starts
                                 time_delta = event_start - current_time
                                 # Round to the nearest minute and return with the object
                                 event['num_minutes'] = time_delta.total_seconds() // 60
                                 return event
-        except Exception as e:
-            # Something went wrong, tell the user (just in case they have a monitor on the Pi)
-            print('\nException type:', type(e))
-            # not much else we can do here except to skip this attempt and try again later
-            print('Error:', sys.exc_info()[0])
-            # light up the array with FAILURE_COLOR LEDs to indicate a problem
-            unicorn.flash_all(1, 2, unicorn.FAILURE_COLOR)
-            # now set the current_activity_light to FAILURE_COLOR to indicate an error state
-            # with the last reading
-            unicorn.set_activity_light(unicorn.FAILURE_COLOR, False)
-            # we have an error, so make note of it
-            self._has_error = True
-            # check to see if reboot is enabled
-            if self._use_reboot_counter:
-                # increment the counter
-                reboot_counter += 1
-                print('Incrementing the reboot counter ({})'.format(reboot_counter))
-                # did we reach the reboot threshold?
-                if reboot_counter == self._reboot_counter_limit:
-                    # Reboot the Pi
-                    for i in range(1, 10):
-                        print('Rebooting in {} seconds'.format(i))
-                        time.sleep(1)
-                    os.system("sudo reboot")
+        # except Exception as e:
+        #     # Something went wrong, tell the user (just in case they have a monitor on the Pi)
+        #     logging.error('Exception type: {}'.format(type(e)))
+        #     # not much else we can do here except to skip this attempt and try again later
+        #     logging.error('Error: {}'.format(sys.exc_info()[0]))
+        #     # light up the array with FAILURE_COLOR LEDs to indicate a problem
+        #     unicorn.flash_all(1, 2, unicorn.FAILURE_COLOR)
+        #     # now set the current_activity_light to FAILURE_COLOR to indicate an error state
+        #     # with the last reading
+        #     unicorn.set_activity_light(unicorn.FAILURE_COLOR, False)
+        #     # we have an error, so make note of it
+        #     self._has_error = True
+        #     # check to see if reboot is enabled
+        #     if self._use_reboot_counter:
+        #         # increment the counter
+        #         reboot_counter += 1
+        #         logging.info('Incrementing the reboot counter ({})'.format(reboot_counter))
+        #         # did we reach the reboot threshold?
+        #         if reboot_counter == self._reboot_counter_limit:
+        #             # Reboot the Pi
+        #             for i in range(1, 10):
+        #                 logging.info('Rebooting in {} seconds'.format(i))
+        #                 time.sleep(1)
+        #             os.system("sudo reboot")
 
         # if we got this far and haven't returned anything, then there's no appointments in the specified time
         # range, or we had an error, so...
