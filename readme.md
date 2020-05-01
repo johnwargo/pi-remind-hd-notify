@@ -1,6 +1,6 @@
 # Raspberry Pi Appointment Reminder HD - Notify Edition
 
-# If modifying these scopes, delete the file token.pickle.
+If modifying these scopes, delete the file token.pickle.
 
 Install Unicorn HAT software
 pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib

@@ -7,6 +7,7 @@
 + Moved configuration settings from the code to an included `config.json` file
 + Replaced all `print` statements with Python Logging
 + Added ability to control the [Fumbly Stuff](https://fumblystuff.com) Remote Notify device whenever your calendar availability changes
++ Moved installation, configuration, and usage instructions from the readme file to the project's Wiki
  
 ## 2020-02-14
 
