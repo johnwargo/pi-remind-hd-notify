@@ -12,7 +12,6 @@ import status
 import unicorn_hat as unicorn
 
 # other modules
-import datetime
 import logging
 import math
 import os
@@ -22,14 +21,28 @@ import time
 
 import pytz
 from dateutil import parser
-from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import client, file, tools
 
+# Google Calendar libraries
+import datetime
+import pickle
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+
 reboot_counter = 0
 
-class GoogleCalendar:
+# Initialize the Google Calendar API stuff
+# Google says: If modifying these scopes, delete your previously saved
+# credentials at ~/.credentials/client_secret.json
+# On the pi, it's in /root/.credentials/
+# SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
+# If modifying these scopes, delete the file token.pickle.
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
+
+class GoogleCalendar:
     # Added to fix an issue when there's an error connecting to the
     # Google Calendar API. The app needs to track whether there's an existing
     # error through the process. If there is, then when checking again for entries
@@ -50,23 +63,38 @@ class GoogleCalendar:
         _reboot_counter_limit = reboot_counter_limit
         _search_limit = search_limit
 
-        # Initialize the Google Calendar API stuff
-        # Google says: If modifying these scopes, delete your previously saved
-        # credentials at ~/.credentials/client_secret.json
-        # On the pi, it's in /root/.credentials/
-        SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
-        store = file.Storage('google_api_token.json')
-        creds = store.get()
-        if not creds or creds.invalid:
-            flow = client.flow_from_clientsecrets('client_secret.json', SCOPES)
-            creds = tools.run_flow(flow, store)
-        self._service = build('calendar', 'v3', http=creds.authorize(Http()))
+        # original apporoach (pi-remind)
+        # store = file.Storage('google_api_token.json')
+        # creds = store.get()
+        # if not creds or creds.invalid:
+        #     flow = client.flow_from_clientsecrets('client_secret.json', SCOPES)
+        #     creds = tools.run_flow(flow, store)
+        # self._service = build('calendar', 'v3', http=creds.authorize(Http()))
+
+        creds = None
+        # The file token.pickle stores the user's access and refresh tokens, and is
+        # created automatically when the authorization flow completes for the first
+        # time.
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
+                creds = pickle.load(token)
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
+        self._service = build('calendar', 'v3', credentials=creds)
 
         # Set the timeout for the rest of the Google API calls.
         # need this at its default (infinity, i think) during the registration process.
         socket.setdefaulttimeout(10)  # 10 seconds
 
-    def has_reminder(self, event):
+    def _has_reminder(self, event):
         # Return true if there's a reminder set for the event
         # First, check to see if there is a default reminder set
         # Yes, I know I could have done this and the next check without using variables
@@ -139,7 +167,7 @@ class GoogleCalendar:
                         # does the event start in the future?
                         if current_time < event_start:
                             # only use events that have a reminder set
-                            if has_reminder(event):
+                            if self._has_reminder(event):
                                 # no? So we can use it
                                 event_summary = event['summary'] if 'summary' in event else 'No Title'
                                 print('Found event:', event_summary)
