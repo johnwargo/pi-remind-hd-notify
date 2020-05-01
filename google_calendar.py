@@ -21,7 +21,7 @@ import time
 
 import pytz
 from dateutil import parser
-# from httplib2 import Http
+from httplib2 import Http
 # from oauth2client import client, file, tools
 
 # Google Calendar libraries
@@ -35,7 +35,7 @@ reboot_counter = 0
 
 # Initialize the Google Calendar API stuff
 # Google says: If modifying these scopes, delete your previously saved
-# credentials at ~/.credentials/client_secret.json
+# credentials at ~/.credentials/credentials.json
 # On the pi, it's in /root/.credentials/
 # SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 # If modifying these scopes, delete the file token.pickle.
@@ -57,58 +57,43 @@ class GoogleCalendar:
     _search_limit = 10
 
     def __init__(self, search_limit, ignore_tentative_appointments, use_reboot_counter, reboot_counter_limit):
-        # TODO: Remove all the debug statements
         _ignore_tentative_appointments = ignore_tentative_appointments
         _use_reboot_counter = use_reboot_counter
         _reboot_counter_limit = reboot_counter_limit
         _search_limit = search_limit
 
-        # original approach (pi-remind)
-        # store = file.Storage('google_api_token.json')
-        # creds = store.get()
-        # if not creds or creds.invalid:
-        #     flow = client.flow_from_clientsecrets('client_secret.json', SCOPES)
-        #     creds = tools.run_flow(flow, store)
-        # self._service = build('calendar', 'v3', http=creds.authorize(Http()))
-
+        # logging.getLogger('googleapicliet.discovery_cache').setLevel(logging.ERROR)
         creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        logging.debug('checking token.pickle')
+        # logging.debug('Checking token.pickle')
         if os.path.exists('token.pickle'):
-            logging.debug('Token file exists')
+            # logging.debug('Token file exists')
             with open('token.pickle', 'rb') as token:
                 creds = pickle.load(token)
-        logging.debug('checking creds')
-        logging.debug('Creds: {}'.format(creds))
+        # logging.debug('checking creds')
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                logging.debug('creds are valid')
-
-                working_dir = os.path.abspath(os.getcwd())
-                credential_file = os.path.join(working_dir, 'credentials.json')
-                logging.debug('Credentials file: {}'.format(credential_file))
-
-                flow = InstalledAppFlow.from_client_secrets_file(credential_file, SCOPES)
-                # flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-
-                logging.debug('running local server')
+                # logging.debug('creds are valid')
+                flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+                # logging.debug('running local server')
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            logging.debug('Save the credentials')
+            # logging.debug('Save the credentials')
             with open('token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
-        logging.debug('initializing calendar service')
+        logging.debug('Initializing calendar service')
         self._service = build('calendar', 'v3', credentials=creds)
 
         # Set the timeout for the rest of the Google API calls.
         # need this at its default (infinity, i think) during the registration process.
-        socket.setdefaulttimeout(10)  # 10 seconds
+        socket.setdefaulttimeout(5)  # seconds
 
+    @staticmethod
     def _has_reminder(self, event):
         # Return true if there's a reminder set for the event
         # First, check to see if there is a default reminder set
@@ -127,6 +112,7 @@ class GoogleCalendar:
         # if we got this far, then there must not be a reminder set
         return False
 
+    @staticmethod
     def get_status(self):
         pass
 

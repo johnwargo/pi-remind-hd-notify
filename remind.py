@@ -104,8 +104,8 @@ def processing_loop():
             last_minute = current_minute
             # we've moved a minute, so we have work to do
             # get the next calendar event (within the specified time limit [in minutes])
-            # next_event = calendar.get_next_event()
-            next_event = cal.get_status()
+            next_event = cal.get_next_event()
+            # next_event = cal.get_status()
             # do we get an event?
             if next_event is not None:
                 num_minutes = next_event['num_minutes']
@@ -168,7 +168,7 @@ def main():
     print(HASHES)
     print('Project: ' + PROJECT_URL + '\n')
 
-    logging.info('Opening project configuration file (config.json)')
+    logging.info('Remind: Opening project configuration file (config.json)')
     # Read the config file contents
     # https://martin-thoma.com/configuration-files-in-python/
     with open("config.json") as json_data_file:
@@ -177,27 +177,27 @@ def main():
     if config:
         valid_config, config_errors = validate_config(config)
         if valid_config:
-            logging.info('Configuration file is valid')
+            logging.info('Remind: Configuration file is valid')
             use_remote_notify = config['use_remote_notify']
             use_reboot_counter = config['use_reboot_counter']
             reboot_counter_limit = config['reboot_counter_limit']
         else:
-            logging.error('The configuration file is missing one or more properties')
+            logging.error('Remind: The configuration file is missing one or more properties')
             logging.error('Missing values: ' + config_errors)
             logging.error(CONFIG_ERROR_STR)
             sys.exit(0)
     else:
-        logging.error('Unable to read the configuration file')
+        logging.error('Remind: Unable to read the configuration file')
         logging.error(CONFIG_ERROR_STR)
         sys.exit(0)
 
     debug_mode = config['debug_mode']
     if debug_mode:
-        logging.info('Enabling debug mode')
+        logging.info('Remind: Enabling debug mode')
         logger.setLevel(logging.DEBUG)
 
     if use_remote_notify:
-        logging.info('Remote Notify Enabled')
+        logging.info('Remind: Remote Notify Enabled')
         access_token = config['access_token']
         device_id = config['device_id']
         # Check to see if the string values we need are populated
@@ -205,18 +205,18 @@ def main():
             logging.error('One or more values are missing from the project configuration file')
             logging.error(CONFIG_ERROR_STR)
             sys.exit(0)
-        logging.debug('Creating Particle object')
+        logging.debug('Remind: Creating Particle object')
         particle = ParticleCloud(access_token, device_id)
 
-        logging.info('Resetting Remote Notify status')
+        logging.info('Remind: Resetting Remote Notify status')
         particle.set_status(Status.FREE)
         time.sleep(1)
         particle.set_status(Status.OFF)
 
     if use_reboot_counter:
-        logging.info('Reboot enabled ({} retries)'.format(reboot_counter_limit))
+        logging.info('Remind: Reboot enabled ({} retries)'.format(reboot_counter_limit))
 
-    logging.info('Initializing Google Calendar interface')
+    logging.info('Remind: Initializing Google Calendar interface')
     try:
         cal = GoogleCalendar(
             # TODO: Make this a configurable setting
@@ -226,7 +226,7 @@ def main():
             reboot_counter_limit
         )
     except Exception as e:
-        logging.error('Unable to initialize Google Calendar API')
+        logging.error('Remind: Unable to initialize Google Calendar API')
         logging.error('Exception type: {}'.format(type(e)))
         logging.error('Error: {}'.format(sys.exc_info()[0]))
         unicorn.set_all(unicorn.FAILURE_COLOR)
@@ -234,7 +234,7 @@ def main():
         unicorn.off()
         sys.exit(0)
 
-    logging.info('Application initialized\n')
+    logging.info('Remind: Application initialized\n')
 
     # flash some random LEDs just for fun...
     unicorn.flash_random(5, 0.5)
