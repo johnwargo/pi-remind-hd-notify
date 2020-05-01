@@ -18,7 +18,7 @@
 from __future__ import print_function
 
 # This project's imports (local modules)
-import google_calendar
+from google_calendar import GoogleCalendar
 from particle import *
 from status import Status
 import unicorn_hat as unicorn
@@ -28,22 +28,14 @@ import json
 import logging
 import sys
 import time
-from oauth2client import client, file, tools
 
-try:
-    import argparse
-
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-except ImportError:
-    flags = None
-
-# import math
-# import os
-# import socket
-# import pytz
-# from dateutil import parser
-# from googleapiclient.discovery import build
-# from httplib2 import Http
+# Pulled this 05/01/2020 because its never used
+# from oauth2client import client, file, tools
+# try:
+#     import argparse
+#     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+# except ImportError:
+#     flags = None
 
 HASH = '#'
 HASHES = '#############################################'
@@ -52,26 +44,24 @@ CONFIG_ERROR_STR = 'Please validate the contents of the config.json file before 
 
 # Event search scope (searches this many minutes in the future for events). Increase this value to get reminders
 # earlier. The app displays WHITE lights from this limit up to FIRST_THRESHOLD
+# TODO: Make this a config setting
 SEARCH_LIMIT = 10  # minutes
 # Reminder thresholds
 FIRST_THRESHOLD = 5  # minutes, WHITE lights before this
 # RED for anything less than (and including) the second threshold
 SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
-# the config object properties, used to validate config
-CONFIG_PROPERTIES = ["access_token", "device_id", "ignore_tentative_appointments", "use_reboot_counter",
-                     "reboot_counter_limit", "use_remote_notify", "debug_mode"]
+
+# the config object properties, used when validating the config
+CONFIG_PROPERTIES = ["access_token", "debug_mode", "device_id", "ignore_tentative_appointments",
+                     "reboot_counter_limit", "use_reboot_counter", "use_remote_notify"]
 
 # initialize the classes we'll use as globals
-google_calendar = None
-particle = None
+cal = None  # Google Calendar
+particle = None  # Particle Cloud
 
 debug_mode = False
 # whether or not you have a remote notify device connected. Use the config file to override
 use_remote_notify = False
-# whether to use the reboot counter
-# use_reboot_counter = False
-# Number of failed requests before the device reboots
-# reboot_counter_limit = 10
 
 
 def validate_config(config_object):
@@ -91,7 +81,7 @@ def validate_config(config_object):
 
 
 def processing_loop():
-    global particle
+    global cal, particle
 
     # initialize the previous remote notify status
     previous_status = -1
@@ -115,14 +105,14 @@ def processing_loop():
             # we've moved a minute, so we have work to do
             # get the next calendar event (within the specified time limit [in minutes])
             # next_event = calendar.get_next_event()
-            next_event = google_calendar.get_status()
+            next_event = cal.get_status()
             # do we get an event?
             if next_event is not None:
                 num_minutes = next_event['num_minutes']
                 if num_minutes != 1:
                     logging.info('Starts in {} minutes\n'.format(num_minutes))
                 else:
-                    logging.info('Starts in 1.0 minute\n')
+                    logging.info('Starts in 1 minute\n')
                 # is the appointment between 10 and 5 minutes from now?
                 if num_minutes >= FIRST_THRESHOLD:
                     # Flash the lights in WHITE
@@ -152,7 +142,7 @@ def processing_loop():
                 if use_remote_notify:
                     # get status from the results
                     # TODO: Change this
-                    current_status = status.Status.BUSY
+                    current_status = Status.BUSY
                     # Only change the status if it's different than the current status
                     if current_status != previous_status:
                         # update the remote device status
@@ -164,7 +154,7 @@ def processing_loop():
 
 
 def main():
-    global debug_mode, google_calendar, particle, use_remote_notify
+    global debug_mode, cal, particle, use_remote_notify
 
     # Setup the logger
     logger = logging.getLogger()
@@ -183,7 +173,7 @@ def main():
     # https://martin-thoma.com/configuration-files-in-python/
     with open("config.json") as json_data_file:
         config = json.load(json_data_file)
-    #  does the config exist (non-empty)?
+    #  did the config read correctly?
     if config:
         valid_config, config_errors = validate_config(config)
         if valid_config:
@@ -210,20 +200,17 @@ def main():
         logging.info('Remote Notify Enabled')
         access_token = config['access_token']
         device_id = config['device_id']
-        # Check to see if the string values are populated
+        # Check to see if the string values we need are populated
         if len(access_token) < 1 or len(device_id) < 1:
             logging.error('One or more values are missing from the project configuration file')
             logging.error(CONFIG_ERROR_STR)
             sys.exit(0)
-        # Initialize the Particle Cloud object
         logging.debug('Creating Particle object')
         particle = ParticleCloud(access_token, device_id)
 
-        # if debug_mode:
-        #     particle.set_status(Status.BUSY)
-        #     time.sleep(3)
-        # turn the remote notify status LED off
-        logging.debug('Setting Remote Notify status to Off')
+        logging.info('Resetting Remote Notify status')
+        particle.set_status(Status.FREE)
+        time.sleep(1)
         particle.set_status(Status.OFF)
 
     if use_reboot_counter:
@@ -231,8 +218,13 @@ def main():
 
     logging.info('Initializing Google Calendar interface')
     try:
-        google_calendar = google_calendar.GoogleCalendar(SEARCH_LIMIT, config.ignore_tentative_appointments,
-                                                         use_reboot_counter, reboot_counter_limit)
+        cal = GoogleCalendar(
+            # TODO: Make this a configurable setting
+            SEARCH_LIMIT,
+            config['ignore_tentative_appointments'],
+            use_reboot_counter,
+            reboot_counter_limit
+        )
     except Exception as e:
         logging.error('Unable to initialize Google Calendar API')
         logging.error('Exception type: {}'.format(type(e)))
@@ -248,7 +240,7 @@ def main():
     unicorn.flash_random(5, 0.5)
     # blink all the LEDs GREEN to let the user know the hardware is working
     unicorn.flash_all(3, 0.10, unicorn.GREEN)
-
+    # get to work
     processing_loop()
 
 

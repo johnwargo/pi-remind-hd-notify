@@ -5,20 +5,21 @@
 # array
 ###########################################################
 # TODO: Make this into a singleton
-# TODO: Clean up imports
 
 import math
-import pytz
 import time
 import unicornhathd
-from dateutil import parser
-from googleapiclient.discovery import build
-from httplib2 import Http
-from oauth2client import client, file, tools
 
-# =============================================================================
+# TODO: Clean up imports
+# import pytz
+# from dateutil import parser
+# from googleapiclient.discovery import build
+# from httplib2 import Http
+# from oauth2client import client, file, tools
+
+# =======================================================================================
 # Borrowed from: https://github.com/pimoroni/unicorn-hat-hd/blob/master/examples/text.py
-# =============================================================================
+# =======================================================================================
 try:
     from PIL import Image, ImageDraw, ImageFont
 except ImportError:
@@ -28,7 +29,7 @@ except ImportError:
 # or `ls /usr/share/fonts/` and explore.
 
 FONT = ("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 12)
-# =============================================================================
+# =======================================================================================
 
 # COLORS
 RED = (255, 0, 0)

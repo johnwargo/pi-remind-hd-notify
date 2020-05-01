@@ -21,8 +21,8 @@ import time
 
 import pytz
 from dateutil import parser
-from httplib2 import Http
-from oauth2client import client, file, tools
+# from httplib2 import Http
+# from oauth2client import client, file, tools
 
 # Google Calendar libraries
 import datetime
@@ -57,13 +57,13 @@ class GoogleCalendar:
     _search_limit = 10
 
     def __init__(self, search_limit, ignore_tentative_appointments, use_reboot_counter, reboot_counter_limit):
-        # config file values passed in
+        # TODO: Remove all the debug statements
         _ignore_tentative_appointments = ignore_tentative_appointments
         _use_reboot_counter = use_reboot_counter
         _reboot_counter_limit = reboot_counter_limit
         _search_limit = search_limit
 
-        # original apporoach (pi-remind)
+        # original approach (pi-remind)
         # store = file.Storage('google_api_token.json')
         # creds = store.get()
         # if not creds or creds.invalid:
@@ -75,19 +75,34 @@ class GoogleCalendar:
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
+        logging.debug('checking token.pickle')
         if os.path.exists('token.pickle'):
+            logging.debug('Token file exists')
             with open('token.pickle', 'rb') as token:
                 creds = pickle.load(token)
+        logging.debug('checking creds')
+        logging.debug('Creds: {}'.format(creds))
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+                logging.debug('creds are valid')
+
+                working_dir = os.path.abspath(os.getcwd())
+                credential_file = os.path.join(working_dir, 'credentials.json')
+                logging.debug('Credentials file: {}'.format(credential_file))
+
+                flow = InstalledAppFlow.from_client_secrets_file(credential_file, SCOPES)
+                # flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+
+                logging.debug('running local server')
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
+            logging.debug('Save the credentials')
             with open('token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
+        logging.debug('initializing calendar service')
         self._service = build('calendar', 'v3', credentials=creds)
 
         # Set the timeout for the rest of the Google API calls.
