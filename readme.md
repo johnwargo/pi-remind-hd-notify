@@ -1,17 +1,22 @@
 # Raspberry Pi Appointment Reminder HD - Notify Edition
 
+## Tasks
+
++ Move readme content to Wiki
++ Remove milliseconds from log output (it's just not needed)
++ Clean up all imports
++ Add Troubleshooting section to the Wiki
++ Move search limit (time) to the config file
+
 If modifying these scopes, delete the file token.pickle.
 
 Install Unicorn HAT software
-pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
-pip install python-dateutil
+pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib python-dateutil
 
 Project relies upon two external services:
 
 + Google Calendar
 + Particle Cloud 
-
-Add Troubleshooting section
 
 Multiple Remind projects:
 
