@@ -110,7 +110,7 @@ class GoogleCalendar:
         socket.setdefaulttimeout(5)  # seconds
 
     @staticmethod
-    def _is_busy(event):
+    def _is_marked_busy(event):
         # TODO: would this work?
         logging.debug('is_busy()')
         return not event['transparency']
@@ -173,7 +173,7 @@ class GoogleCalendar:
             nearest_time = min(nearest_time, event['minutes_to_start'])
         return nearest_time, ','.join(summary_list)
 
-    @staticmethod
+
     def get_status(self, time_window):
         logging.debug('get_status({})'.format(time_window))
         # get the status of the user's calendar
@@ -206,7 +206,7 @@ class GoogleCalendar:
         # reset the reboot counter, since everything worked so far
         reboot_counter = 0
 
-        # set our base calendar status, assume we're turning the status LED off
+        # set our base calendar status, assume we're turning the Remote Notify status LED off
         current_status = Status.OFF
         if self._is_working_hours(now):
             current_status = Status.FREE
@@ -252,11 +252,11 @@ class GoogleCalendar:
                         # Are we processing busy events only?
                         if self._busy_only:
                             # then is the user marked busy for this event?
-                            if self.is_busy(event):
+                            if self._is_marked_busy(event):
                                 # add the event to our current event list
                                 current_status = Status.BUSY
                         else:
-                            if self.is_busy(event):
+                            if self._is_marked_busy(event):
                                 # add the event to our current event list
                                 current_status = min(current_status, Status.BUSY)
                             else:
