@@ -100,6 +100,7 @@ def processing_loop():
         current_minute = datetime.datetime.now().minute
         # is it the same minute as the last time we checked?
         if current_minute != last_minute:
+            logging.info(HASHES)
             # reset last_minute to the current_minute, of course
             last_minute = current_minute
             # we've moved a minute, so we have work to do
@@ -111,9 +112,10 @@ def processing_loop():
             # Any meetings coming up in the next num_minutes minutes?
             if num_minutes > 0:
                 if num_minutes != 1:
-                    logging.info('Starts in {} minutes\n'.format(num_minutes))
+                    logging.info('Next event starts in {} minutes'.format(num_minutes))
                 else:
-                    logging.info('Starts in 1 minute\n')
+                    logging.info('Next event starts in 1 minute')
+                logging.info('Event list: {}'.format(summary_string))
                 # is the appointment between 10 and 5 minutes from now?
                 if num_minutes >= FIRST_THRESHOLD:
                     # Flash the lights in WHITE
@@ -138,11 +140,14 @@ def processing_loop():
                     unicorn.display_text(summary_string, unicorn.ORANGE)
                     # set the activity light to SUCCESS_COLOR (green by default)
                     unicorn.set_activity_light(unicorn.ORANGE, False)
+            else:
+                logging.debug('No upcoming events found')
 
             # should we update a remote notify device?
             if use_remote_notify:
                 # Only change the status if it's different than the current status
                 if calendar_status != previous_status:
+                    logging.info('Setting Remote Notify status to {}'.format(calendar_status))
                     # Capture the current status for next time
                     previous_status = calendar_status
                     # update the remote device status
@@ -215,9 +220,9 @@ def main():
         particle = ParticleCloud(access_token, device_id)
 
         logging.info('Remind: Resetting Remote Notify status')
-        particle.set_status(Status.FREE)
+        particle.set_status(Status.FREE.value)
         time.sleep(1)
-        particle.set_status(Status.OFF)
+        particle.set_status(Status.OFF.value)
 
     if use_reboot_counter:
         logging.info('Remind: Reboot enabled ({} retries)'.format(reboot_counter_limit))
@@ -239,7 +244,7 @@ def main():
         unicorn.off()
         sys.exit(0)
 
-    logging.info('Remind: Application initialized\n')
+    logging.info('Remind: Application initialized')
 
     # flash some random LEDs just for fun...
     unicorn.flash_random(5, 0.5)

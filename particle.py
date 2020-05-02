@@ -4,10 +4,7 @@
 # Exposes methods to trigger Particle Cloud methods for
 # the Remote Notify device
 ###########################################################
-# TODO: Clean up imports
 
-# This project's imports (local modules)
-from status import Status
 #  Other imports
 import logging
 import requests
@@ -26,15 +23,15 @@ class ParticleCloud:
         self._status = 0
 
     def set_status(self, status_val):
-        logging.debug('Particle Cloud: set_status()')
-        return self.invoke_particle_cloud(PARTICLE_VERB_1, status_val.value)
+        logging.debug('Particle Cloud: set_status({})'.format(status_val))
+        return self.invoke_particle_cloud(PARTICLE_VERB_1, status_val)
 
     def get_status(self):
         logging.debug('Particle Cloud: get_status()')
         return self.invoke_particle_cloud(PARTICLE_VERB_2, -1)
 
     def invoke_particle_cloud(self, verb_string, status):
-        logging.debug('Invoking Particle Cloud')
+        logging.debug('invoke_particle_cloud("{}", {})'.format(verb_string, status))
         logging.debug('Access token: {}'.format(self._access_token))
         logging.debug('Device ID: {}'.format(self._device_id))
         logging.debug('Status: {}'.format(status))

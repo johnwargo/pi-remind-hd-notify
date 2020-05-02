@@ -7,6 +7,7 @@
 # TODO: Support working hours (off vs. free)
 # TODO: Ignore tentative appointments
 # TODO: Move reboot counter to remind.py
+# TODO: Fix display fonts
 
 # This project's imports (local modules)
 from status import Status
@@ -111,19 +112,19 @@ class GoogleCalendar:
 
     @staticmethod
     def _is_marked_busy(event):
-        # TODO: would this work?
-        logging.debug('is_busy()')
-        return not event['transparency']
-        # busy if transparency is missing
-        # transparent = event['transparency']
-        # if transparent:
-        #     return False
-        # else:
-        #     return True
+        logging.debug('_is_marked_busy(event)')
+        # event is busy if transparency is missing from the event object
+        try:
+            if event['transparency']:
+                return False
+            else:
+                return True
+        except KeyError:
+            return True
 
     @staticmethod
     def _has_reminder(event):
-        logging.debug('has_reminder()')
+        logging.debug('_has_reminder()')
         # Return true if there's a reminder set for the event
         # First, check to see if there is a default reminder set
         # Yes, I know I could have done this and the next check without using variables
@@ -145,7 +146,7 @@ class GoogleCalendar:
     @staticmethod
     def _is_working_hours(now):
         # TODO: Implement this
-        logging.debug('is_working_hours()')
+        logging.debug('_is_working_hours({})'.format(now))
         # is the current time within working hours?
         return True
 
@@ -172,7 +173,6 @@ class GoogleCalendar:
             # find the nearest (soonest) meeting time
             nearest_time = min(nearest_time, event['minutes_to_start'])
         return nearest_time, ','.join(summary_list)
-
 
     def get_status(self, time_window):
         logging.debug('get_status({})'.format(time_window))
@@ -207,9 +207,9 @@ class GoogleCalendar:
         reboot_counter = 0
 
         # set our base calendar status, assume we're turning the Remote Notify status LED off
-        current_status = Status.OFF
+        current_status = Status.OFF.value
         if self._is_working_hours(now):
-            current_status = Status.FREE
+            current_status = Status.FREE.value
 
         # Did we get any events back?
         if not event_list:
@@ -222,6 +222,7 @@ class GoogleCalendar:
             current_time = pytz.utc.localize(datetime.datetime.utcnow())
             # an empty list of upcoming events, will populate in the following loop
             upcoming_events = []
+            logging.info('Events returned: {}'.format(len(event_list)))
             # loop through the events in the list
             for event in event_list:
                 # write the event to the console
@@ -236,6 +237,7 @@ class GoogleCalendar:
                     event_start = parser.parse(start)
                     # does the event start in the future?
                     if current_time < event_start:
+                        logging.debug('Located an upcoming event')
                         time_delta = event_start - current_time
                         new_event = self._process_upcoming_event(event, start, time_delta)
                         logging.debug('New Event: {}'.format(new_event))
@@ -248,22 +250,30 @@ class GoogleCalendar:
                             # add the event to our upcoming event list
                             upcoming_events.append(new_event)
                     else:
+                        logging.debug('Located an ongoing event')
                         # we have an ongoing/current event
                         # Are we processing busy events only?
                         if self._busy_only:
                             # then is the user marked busy for this event?
                             if self._is_marked_busy(event):
                                 # add the event to our current event list
-                                current_status = Status.BUSY
+                                current_status = Status.BUSY.value
                         else:
                             if self._is_marked_busy(event):
                                 # add the event to our current event list
-                                current_status = min(current_status, Status.BUSY)
+                                current_status = min(current_status, Status.BUSY.value)
                             else:
-                                current_status = min(current_status, Status.TENTATIVE)
+                                current_status = min(current_status, Status.TENTATIVE.value)
             # start processing our lists
+            # do we have any upcoming events?
+            if len(upcoming_events) > 0:
+                # then process the list and figure out when the next one is
+                num_minutes, summary_string = self._process_upcoming_events(upcoming_events, time_window)
+            else:
+                # No? Then return an invalid number of minutes to the next appt.
+                num_minutes = -1
+                summary_string = ''
             # Return values: num_minutes, summary_string, calendar_status
-            num_minutes, summary_string = self._process_upcoming_events(upcoming_events, time_window)
             return num_minutes, summary_string, current_status
 
     # def get_next_event(self, time_window):
