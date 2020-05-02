@@ -52,8 +52,8 @@ FIRST_THRESHOLD = 5  # minutes, WHITE lights before this
 SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 
 # the config object properties, used when validating the config
-CONFIG_PROPERTIES = ["access_token", "debug_mode", "device_id", "ignore_tentative_appointments",
-                     "reboot_counter_limit", "use_reboot_counter", "use_remote_notify"]
+CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "device_id", "reboot_counter_limit", "reminder_only",
+                     "use_reboot_counter", "use_remote_notify"]
 
 # initialize the classes we'll use as globals
 cal = None  # Google Calendar
@@ -103,12 +103,13 @@ def processing_loop():
             # reset last_minute to the current_minute, of course
             last_minute = current_minute
             # we've moved a minute, so we have work to do
-            # get the next calendar event (within the specified time limit [in minutes])
-            next_event = cal.get_next_event()
-            # next_event = cal.get_status()
-            # do we get an event?
-            if next_event is not None:
-                num_minutes = next_event['num_minutes']
+            # get the calendar status from Google Calendar
+            num_minutes, summary_string, calendar_status = cal.get_status(SEARCH_LIMIT)
+            # num_minutes: How many minutes before the next meeting start time
+            # summary_string: Concatenated list of upcoming meeting summaries
+            # calendar_status: Remote Notify Status value (busy, tentative, free, off)
+            # Any meetings coming up in the next num_minutes minutes?
+            if num_minutes > 0:
                 if num_minutes != 1:
                     logging.info('Starts in {} minutes\n'.format(num_minutes))
                 else:
@@ -118,7 +119,7 @@ def processing_loop():
                     # Flash the lights in WHITE
                     unicorn.flash_all(1, 0.25, unicorn.WHITE)
                     # display the event summary
-                    unicorn.display_text(next_event['summary'], unicorn.WHITE)
+                    unicorn.display_text(summary_string, unicorn.WHITE)
                     # set the activity light to WHITE as an indicator
                     unicorn.set_activity_light(unicorn.WHITE, False)
                 # is the appointment less than 5 minutes but more than 2 minutes from now?
@@ -126,7 +127,7 @@ def processing_loop():
                     # Flash the lights YELLOW
                     unicorn.flash_all(2, 0.25, unicorn.YELLOW)
                     # display the event summary
-                    unicorn.display_text(next_event['summary'], unicorn.YELLOW)
+                    unicorn.display_text(summary_string, unicorn.YELLOW)
                     # set the activity light to YELLOw as an indicator
                     unicorn.set_activity_light(unicorn.YELLOW, False)
                 else:
@@ -134,20 +135,18 @@ def processing_loop():
                     # swirl the lights. Longer every second closer to start time
                     unicorn.do_swirl(int((4 - num_minutes) * 50))
                     # display the event summary
-                    unicorn.display_text(next_event['summary'], unicorn.ORANGE)
+                    unicorn.display_text(summary_string, unicorn.ORANGE)
                     # set the activity light to SUCCESS_COLOR (green by default)
                     unicorn.set_activity_light(unicorn.ORANGE, False)
 
-                # should we update a remote notify device?
-                if use_remote_notify:
-                    # get status from the results
-                    # TODO: Change this
-                    current_status = Status.BUSY
-                    # Only change the status if it's different than the current status
-                    if current_status != previous_status:
-                        # update the remote device status
-                        previous_status = current_status
-                        particle.set_status(current_status)
+            # should we update a remote notify device?
+            if use_remote_notify:
+                # Only change the status if it's different than the current status
+                if calendar_status != previous_status:
+                    # Capture the current status for next time
+                    previous_status = calendar_status
+                    # update the remote device status
+                    particle.set_status(calendar_status)
 
         # wait a second then check again
         # You can always increase the sleep value below to check less often
@@ -173,7 +172,7 @@ def main():
     print(HASH, 'Pi Remind HD Notify                      ', HASH)
     print(HASH, 'By John M. Wargo (https://johnwargo.com) ', HASH)
     print(HASHES)
-    print('Project: ' + PROJECT_URL + '\n')
+    print('From: ' + PROJECT_URL + '\n')
 
     logging.info('Remind: Opening project configuration file (config.json)')
     # Read the config file contents
@@ -226,9 +225,8 @@ def main():
     logging.info('Remind: Initializing Google Calendar interface')
     try:
         cal = GoogleCalendar(
-            # TODO: Make this a configurable setting
-            SEARCH_LIMIT,
-            config['ignore_tentative_appointments'],
+            config['busy_only'],
+            config['reminder_only'],
             use_reboot_counter,
             reboot_counter_limit
         )

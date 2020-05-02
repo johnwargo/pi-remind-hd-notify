@@ -62,24 +62,24 @@ class GoogleCalendar:
     # successful.
     _has_error = False
 
-    _ignore_tentative_appointments = False
+    _busy_only = False
+    _reminder_only = False
     _use_reboot_counter = False
     _reboot_counter_limit = 0
     _service = None
-    _search_limit = 10
 
-    def __init__(self, search_limit, ignore_tentative_appointments, use_reboot_counter, reboot_counter_limit):
+    def __init__(self, busy_only, reminder_only, use_reboot_counter, reboot_counter_limit):
         # Populate the local properties
-        self._ignore_tentative_appointments = ignore_tentative_appointments
+        self._busy_only = busy_only
+        self._reminder_only = reminder_only
         self._use_reboot_counter = use_reboot_counter
         self._reboot_counter_limit = reboot_counter_limit
-        self._search_limit = search_limit
         # Tell users what's happening
         logging.info('Calendar Initialization')
-        logging.info('Calendar: Ignore Tentative: {}'.format(self._ignore_tentative_appointments))
+        logging.info('Calendar: Busy Only: {}'.format(self._busy_only))
+        logging.info('Calendar: Reminder Only: {}'.format(self._reminder_only))
         logging.info('Calendar: Reboot Counter: {}'.format(self._use_reboot_counter))
         logging.info('Calendar: Reboot Counter Limit: {}'.format(self._reboot_counter_limit))
-        logging.info('Calendar: Search Limit: {}'.format(self._search_limit))
 
         # Turn off logging of specific warnings
         logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
@@ -108,6 +108,17 @@ class GoogleCalendar:
         # need this at its default (infinity, i think) during the registration process.
         socket.setdefaulttimeout(5)  # seconds
 
+
+    @staticmethod
+    def _is_busy(event):
+        # TODO: would this work: `return not event['transparency']`?
+        # busy if transparency is missing
+        transparent = event['transparency']
+        if transparent:
+            return False
+        else:
+            return True
+
     @staticmethod
     def _has_reminder(event):
         # Return true if there's a reminder set for the event
@@ -120,26 +131,39 @@ class GoogleCalendar:
             return True
         else:
             # are there overrides set for reminders?
-            overrides = event['reminders'].get('overrides')
-            if overrides:
+            # overrides = event['reminders'].get('overrides')
+            # if overrides:
+            if event['reminders'].get('overrides'):
                 # OK, then we have a reminder to use
                 return True
         # if we got this far, then there must not be a reminder set
         return False
 
     @staticmethod
-    def get_status(self):
+    def _is_current_event(event):
+        # Is the event happening now?
+
         pass
 
-    def get_next_event(self):
+    @staticmethod
+    def _is_future_event(event, time_window):
+        # is this event starting within the time window?
+
+        pass
+
+    @staticmethod
+    def get_status(self, time_window):
+        # get the status of the user's calendar
+        pass
+
+    def get_next_event(self, time_window):
         global reboot_counter
-        # modified from https://developers.google.com/google-apps/calendar/quickstart/python
         # get all of the events on the calendar from now through 10 minutes from now
         logging.info('Getting next event')
         # this 'now' is in a different format (UTC)
         now = datetime.datetime.utcnow()
         # Calculate a time search_limit from now
-        then = now + datetime.timedelta(minutes=self._search_limit)
+        then = now + datetime.timedelta(minutes=time_window)
         # if we don't have an error from the previous attempt, then change the LED color
         # otherwise leave it alone (it should already be red, so it will stay that way).
         if not self._has_error:
@@ -172,6 +196,8 @@ class GoogleCalendar:
                 current_time = pytz.utc.localize(datetime.datetime.utcnow())
                 # loop through the events in the list
                 for event in event_list:
+                    # write the event to the console
+                    logging.debug('Event: {}'.format(event))
                     # we only care about events that have a start time
                     start = event['start'].get('dateTime')
                     # return the first event that has a start time

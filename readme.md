@@ -98,7 +98,7 @@ For this project, I used the following components:
 
 Before you start, you must setup an account with Google so the app can consume the Google Calendar APIs used by the project. To setup your account, read the [Google Calendar API Python Quickstart](https://developers.google.com/google-apps/calendar/quickstart/python).
 
-At the conclusion of the Google account setup process, download your Google Calendar API application's `client_secret.json` file, you'll need to copy the file to the Pi Reminder project folder later.. Be sure to name the downloaded file using that file name. The project's code uses this file to authorize access your Google Calendar and that file name is hard coded into the project's Python app. The file will contain a big random number in its file name, just rename it to `client_secret.json`.
+At the conclusion of the Google account setup process, download your Google Calendar API application's `credentials.json` file, you'll need to copy the file to the Pi Reminder project folder later.. Be sure to name the downloaded file using that file name. The project's code uses this file to authorize access your Google Calendar and that file name is hard coded into the project's Python app. The file will contain a big random number in its file name, just rename it to `credentials.json`.
 
 ## Raspberry Pi Setup
 
@@ -227,12 +227,6 @@ See the [Changelog](changelog.md).
 ## Known Issues
 
 * Reminders are triggered for canceled events. If you have your Google Calendar configured to show deleted events, `pi_remind` will flash its lights for those events as well. I've tried setting `showDeleted` to `false` in the API call that gets the calendar entry list from Google, but it does not seem to have an effect (in my testing anyway).
-
-***
-
-If you find this code useful, and feel like thanking me for providing it, please consider making a purchase from [my Amazon Wish List](https://amzn.com/w/1WI6AAUKPT5P9). You can find information on many different topics on my [personal blog](http://www.johnwargo.com). Learn about all of my publications at [John Wargo Books](http://www.johnwargobooks.com).
-
-
 
 ***
 

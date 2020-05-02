@@ -1,9 +1,10 @@
 {
   "access_token": "",
+  "busy_only": true,
   "device_id": "",
-  "ignore_tentative_appointments": false,
-  "use_reboot_counter": false,
+  "reminder_only": true,
+  "use_reboot_counter": true,
   "reboot_counter_limit": 10,
-  "use_remote_notify": false,
-  "debug_mode": false
+  "use_remote_notify": true,
+  "debug_mode": true
 }
