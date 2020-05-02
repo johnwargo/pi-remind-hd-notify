@@ -1,10 +1,13 @@
 {
   "access_token": "",
-  "busy_only": true,
+  "busy_only": false,
   "device_id": "",
-  "reminder_only": true,
+  "reminder_only": false,
   "use_reboot_counter": true,
   "reboot_counter_limit": 10,
   "use_remote_notify": true,
-  "debug_mode": true
+  "debug_mode": false,
+  "use_working_hours": true,
+  "work_start": "8:00",
+  "work_end": "17:30"
 }

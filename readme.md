@@ -41,6 +41,11 @@ you'll want to keep the original around as a reference methinks
 }
 ```
 
+debug is cool because it outputs everything the app is doing
+Since the Google Calendar uses it as well, you get output from that library as well
+
+How working hours work
+
 ---
 
 The project is an enhancement to the [Pi Remind HD](https://github.com/johnwargo/pi-remind-hd) project enabling it to work with the [Remote Notify](https://github.com/johnwargo/particle-remote-notify-rgb) project. 

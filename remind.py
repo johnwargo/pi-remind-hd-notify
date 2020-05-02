@@ -14,10 +14,11 @@
 
     Google Calendar example code: https://developers.google.com/google-apps/calendar/quickstart/python
 ********************************************************************************************************************"""
-# TODO: Support working hours (off vs. free)
+# TODO: Add support for working hours (off vs. free)
 # TODO: Make search limit a config setting
 # TODO: Move reboot counter to remind.py
 # TODO: Fix display fonts
+# TODO: Use threads for call to Particle Cloud
 
 from __future__ import print_function
 
@@ -48,7 +49,7 @@ SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 
 # the config object properties, used when validating the config
 CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "device_id", "reboot_counter_limit", "reminder_only",
-                     "use_reboot_counter", "use_remote_notify"]
+                     "use_reboot_counter", "use_remote_notify", "use_working_hours", "work_start", "work_end"]
 
 # initialize the classes we'll use as globals
 cal = None  # Google Calendar
@@ -224,7 +225,10 @@ def main():
             config['busy_only'],
             config['reminder_only'],
             use_reboot_counter,
-            reboot_counter_limit
+            reboot_counter_limit,
+            config['use_work_hours'],
+            config['work_start'],
+            config['work_end'],
         )
     except Exception as e:
         logging.error('Remind: Unable to initialize Google Calendar API')

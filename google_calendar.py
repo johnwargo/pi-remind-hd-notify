@@ -59,19 +59,32 @@ class GoogleCalendar:
     _use_reboot_counter = False
     _reboot_counter_limit = 0
     _service = None
+    _use_work_hours = False
+    _work_start = ''
+    _work_end = ''
 
-    def __init__(self, busy_only, reminder_only, use_reboot_counter, reboot_counter_limit):
+
+    def __init__(self, busy_only, reminder_only, use_reboot_counter, reboot_counter_limit, use_work_hours, work_start,
+                 work_end):
         # Populate the local properties
         self._busy_only = busy_only
         self._reminder_only = reminder_only
         self._use_reboot_counter = use_reboot_counter
         self._reboot_counter_limit = reboot_counter_limit
-        # Tell users what's happening
+        self._use_work_hours = use_work_hours
+        if self._use_work_hours:
+            self._work_start = work_start
+            self._work_end = work_end
+            # TODO: Setup parameters for calculating work hour range
         logging.info('Calendar Initialization')
         logging.info('Calendar: Busy Only: {}'.format(self._busy_only))
         logging.info('Calendar: Reminder Only: {}'.format(self._reminder_only))
         logging.info('Calendar: Reboot Counter: {}'.format(self._use_reboot_counter))
-        logging.info('Calendar: Reboot Counter Limit: {}'.format(self._reboot_counter_limit))
+        if self._use_reboot_counter:
+            logging.info('Calendar: Reboot Counter Limit: {}'.format(self._reboot_counter_limit))
+        logging.info('Calendar: Use Work Hours: {}'.format(self._use_work_hours))
+        if self._use_work_hours:
+            logging.info('Work hours: {} to {}'.format(self._work_start, self._work_end))
 
         # Turn off logging of specific warnings
         logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
