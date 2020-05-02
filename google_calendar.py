@@ -3,11 +3,6 @@
 #
 # Exposes properties and methods for the Google Calendar
 ###########################################################
-# TODO: Clean up imports
-# TODO: Support working hours (off vs. free)
-# TODO: Ignore tentative appointments
-# TODO: Move reboot counter to remind.py
-# TODO: Fix display fonts
 
 # This project's imports (local modules)
 from status import Status
@@ -15,15 +10,10 @@ import unicorn_hat as unicorn
 
 # other modules
 import logging
-import math
 import os
 import socket
-import sys
-import time
 import pytz
 from dateutil import parser
-from httplib2 import Http
-
 # Google Calendar libraries
 import datetime
 import pickle
@@ -172,7 +162,7 @@ class GoogleCalendar:
             summary_list.append(event['summary'] if 'summary' in event else 'No Title')
             # find the nearest (soonest) meeting time
             nearest_time = min(nearest_time, event['minutes_to_start'])
-        return nearest_time, ','.join(summary_list)
+        return nearest_time, ', '.join(summary_list)
 
     def get_status(self, time_window):
         logging.debug('get_status({})'.format(time_window))

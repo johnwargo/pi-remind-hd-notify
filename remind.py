@@ -14,7 +14,11 @@
 
     Google Calendar example code: https://developers.google.com/google-apps/calendar/quickstart/python
 ********************************************************************************************************************"""
-# TODO: Clean up imports
+# TODO: Support working hours (off vs. free)
+# TODO: Make search limit a config setting
+# TODO: Move reboot counter to remind.py
+# TODO: Fix display fonts
+
 from __future__ import print_function
 
 # This project's imports (local modules)
@@ -29,14 +33,6 @@ import logging
 import sys
 import time
 
-# Pulled this 05/01/2020 because its never used
-# from oauth2client import client, file, tools
-# try:
-#     import argparse
-#     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-# except ImportError:
-#     flags = None
-
 HASH = '#'
 HASHES = '#############################################'
 PROJECT_URL = 'https://github.com/johnwargo/pi-remind-hd-notify'
@@ -44,7 +40,6 @@ CONFIG_ERROR_STR = 'Please validate the contents of the config.json file before 
 
 # Event search scope (searches this many minutes in the future for events). Increase this value to get reminders
 # earlier. The app displays WHITE lights from this limit up to FIRST_THRESHOLD
-# TODO: Make this a config setting
 SEARCH_LIMIT = 10  # minutes
 # Reminder thresholds
 FIRST_THRESHOLD = 5  # minutes, WHITE lights before this
@@ -162,14 +157,10 @@ def main():
     global debug_mode, cal, particle, use_remote_notify
 
     # Setup the logger
-    # TODO: omit milliseconds from time value
+    format = "%(asctime)s %(levelname)s %(message)s"
+    logging.basicConfig(format=format, level=logging.INFO,
+                        datefmt="%Y-%m-%d %H:%M:%S")
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
 
     # tell the user what we're doing...
     print('\n')
