@@ -17,12 +17,7 @@ Project relies upon two external services:
 + Google Calendar
 + Particle Cloud 
 
-Multiple Remind projects:
 
-+ Pi Remind
-+ Pi Remind Blinkit
-+ Pi Remind HD (archived, point to this one)
-+ Pi Remind HD Notify
 
 Copy `config.rename` to `config.json`
 you'll want to keep the original around as a reference methinks
@@ -57,45 +52,7 @@ Complete project setup instructions for the Pi Remind HD Notify project are in t
 
 Put this content in the Wiki
 
-# Raspberry Pi Appointment Reminder (HD)
 
-I often find myself missing appointments because I'm engrossed in my work or because I've switched to a different computer and can't hear the reminder ping on my work laptop. I created this project to give me a visual reminder, an obnoxious, silent countdown timer I can set on my desk to flash lights at me as a warning before my next meeting starts.
-
-The project uses a network connected Raspberry Pi and a [Pimoroni Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd) to flash the reminder. The project was originally built using the Pimoroni Unicorn HAT, and published in Make Magazine (makezine.com): [Get a Flashing Meeting Reminder with a Raspberry Pi](http://makezine.com/projects/get-a-flashing-meeting-reminder-with-a-raspberry-pi/). For this version, I upgraded the Unicorn HAT to the High Definition (HD) version which will allow me to display much cleaner and more interesting color patterns. The HD version of the Unicorn HAT has 256 LEDs vs the original Unicorn HAT's 64, for much higher pixel resolution.
-
-One of the things I wanted to do in the original project was display the meeting description/subject on the Unicorn HAT. I could have done it, but because of the low pixel resolution of the Unicorn HAT, it would have looked clunky. The Unicorn HAT HD has a higher pixel resolution, so I've added the feature here.
-
-## Alerts
-
-The Pi connects to Google Calendar and checks every minute for upcoming appointments then flashes the Unicorn HAT's LEDs for following alerts:
-
-* **White** @ 10 minutes until 5 minutes
-* **Yellow** @ 5 minutes until 2 minutes
-* **Multi-color swirl** @ 2 minutes
-
-If you're feeling adventurous, you can change the code to use any of the sample patterns included with the [Unicorn HAT HD Sample Code](https://github.com/pimoroni/unicorn-hat-hd/tree/master/examples).  I'm personally a big fan of the star field example, but that's not very useful as an alerting mechanism.
-
-## Indicator LED
-
-The project displays a single indicator LED to let you know the app is working. It will illuminate a single LED along the bottom row of the Unicorn HAT and move the LED across the display every time it connects to Google to obtain calendar information. The color of the LED indicates status of the app as well:
-
-* **Blue** - The app is connecting to the Google Calendar API
-* **Green** - The app received data from the Google Calendar API, but there are no pending appointments within the next 10 minutes
-* **Red** - The app encountered an error connecting to the Google Calendar API
-* **White** - There is an appointment beginning within 10 minutes
-* **Yellow** - There is an appointment beginning within the next 5 minutes
-* **Orange** - There is an appointment beginning within the next 2 minutes
-
-This way, even if you miss the flashing lights, you can glance at the display and still determine if you have an upcoming appointment.
-
-## Required Components
-
-For this project, I used the following components:
-
-* [Raspberry Pi 3](https://www.raspberrypi.org/), but most any Pi will work. Check the Unicorn HAT documentation for supported Pi devices.
-* [Pimoroni Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd)
-* [Adafruit Raspberry Pi B+ / Pi 2 / Pi 3 Case - Smoke Base - w/ Clear Top](https://www.adafruit.com/products/2258)
-* [CanaKit 5V 2.5A Raspberry Pi 3 Power Supply / Adapter / Charger (UL Listed)](http://www.amazon.com/CanaKit-Raspberry-Supply-Adapter-Charger/dp/B00MARDJZ4) from Amazon
 
 ## Google Calendar API Setup
 
