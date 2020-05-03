@@ -48,87 +48,9 @@ In this project, the status of the user's Google Calendar is also sent to the Re
 
 Complete project setup instructions for the Pi Remind HD Notify project are in the project repository's [Wiki](https://github.com/johnwargo/pi-remind-hd-notify/wiki). Setup instructions for the Remote Notify device are in that project's [Wiki](https://github.com/johnwargo/particle-remote-notify-rgb/wiki).
 
-## MOVE TO WIKI
-
-Put this content in the Wiki
 
 
 
-## Google Calendar API Setup
-
-Before you start, you must setup an account with Google so the app can consume the Google Calendar APIs used by the project. To setup your account, read the [Google Calendar API Python Quickstart](https://developers.google.com/google-apps/calendar/quickstart/python).
-
-At the conclusion of the Google account setup process, download your Google Calendar API application's `credentials.json` file, you'll need to copy the file to the Pi Reminder project folder later.. Be sure to name the downloaded file using that file name. The project's code uses this file to authorize access your Google Calendar and that file name is hard coded into the project's Python app. The file will contain a big random number in its file name, just rename it to `credentials.json`.
-
-## Raspberry Pi Setup
-
-We'll start by connecting all the hardware, then move on to the software setup.
-
-### Hardware
-
-To setup the hardware, complete the following steps:
-
-1. Mount the Pimoroni Unicorn HAT HD on the Raspberry Pi device using the included hardware
-2. Place the Pi in a case
-3. Power it up!
-
-That's it, you're done. That was easy! When you're done, the Pi will look something like the following:
-
-![Raspberry Pi Configuration Hardware Assembly](screenshots/figure-01.png)
-
-**Note:** The Unicorn HAT HD has a smoked lens that hides the actual LED elements, so you can't really see the HAT in the case. It's a much cleaner, more professional look than my previous reminder projects.
-
-When the Pi boots up, log into the Pi using the default credentials (`pi`/`raspberry`). Next, you must change the Pi's hardware configuration so it can talk to the Unicorn HAT HD using the SPI protocol. Open the Pi menu (located in the upper-left corner of the screen), select **Preferences**, then **Raspberry Pi Configuration**. In the application that opens, select the **Interfaces** tab, then enable the **SPI** option as shown in the following figure:
-
-![Raspberry Pi Configuration Utility](screenshots/figure-02.png)
-
-Click the **OK** button to save your changes.  You should **not** have to reboot your Pi after completing this step.
-
-### Software
-
-When the Pi is all ready to go, open a terminal window and update the device's software using the following commands:
-
-```shell
-sudo apt-get update
-sudo apt-get upgrade
-```
-
-> Note: More recent versions of the Raspbian OS automatically check for updates on first launch, so the previous step is probably no longer necessary. If you're using a Pi that's been running for a while, it's always best to install all updates when you get a chance.
-
-The first command updates the local software repositories and the second command updates the Pi's Raspbian OS and associated files.
-
-Next, install the [Google Calendar API Python files](https://developers.google.com/api-client-library/python/start/installation) along with some date handling libraries using the following command:
-
-```shell
-pip install --upgrade google-api-python-client oauth2client python-dateutil pytz
-```
-
-> Note: The original version of this project used `sudo` to install Python libraries, but that's no longer necessary.
-
-Install the Unicorn HAT libraries following the instructions on the [Pimoroni web site](https://github.com/pimoroni/unicorn-hat-hd). Basically, open a terminal window and execute the following command:
-
-```shell
-curl -sS get.pimoroni.com/unicornhathd | bash
-```
-
-Next, download the project's code; in the same terminal window, execute the following commands:
-
-```shell
-git clone https://github.com/johnwargo/pi-remind-hd
-cd pi-remind-hd
-ls
-```
-
-If all goes well, you should see the following files in the folder:
-
-* `screenshots` (folder)
-* `changelog.md`
-* `LICENSE`
-* `readme.md` (this file)
-* `remind.py`
-* `start-remind.sh`
-
-> Note: You only need the `remind.py` and `start-remind.sh` files to run this project on the Raspberry Pi; the remaining files are just documentation.  If you want to, you can delete the other files and the one folder to free up space on your Pi.
 
 Copy your personal Google Calendar project's `client_secret.json` file (downloaded when you created your Google account) to the `pi-remind-hd` folder you just created. With everything in place, execute the reminder app using the following command:
 
