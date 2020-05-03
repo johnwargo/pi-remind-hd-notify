@@ -4,8 +4,6 @@
 
 + Move readme content to Wiki
 + Archive the Pi-Remind-HD project and point to this one
-+ Remove milliseconds from log output (it's just not needed)
-+ Clean up all imports
 + Add Troubleshooting section to the Wiki
 + Move search limit (time) to the config file
 
