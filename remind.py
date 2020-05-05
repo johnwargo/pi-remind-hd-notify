@@ -17,7 +17,6 @@
 # TODO: Add support for working hours (off vs. free)
 # TODO: Make search limit a config setting
 # TODO: Move reboot counter to remind.py
-# TODO: Fix display fonts
 # TODO: Use threads for call to Particle Cloud
 
 from __future__ import print_function

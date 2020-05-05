@@ -4,18 +4,10 @@
 # exposes properties and methods for the Unicorn HAT LED
 # array
 ###########################################################
-# TODO: Make this into a singleton
 
 import math
 import time
 import unicornhathd
-
-# TODO: Clean up imports
-# import pytz
-# from dateutil import parser
-# from googleapiclient.discovery import build
-# from httplib2 import Http
-# from oauth2client import client, file, tools
 
 # =======================================================================================
 # Borrowed from: https://github.com/pimoroni/unicorn-hat-hd/blob/master/examples/text.py
@@ -24,11 +16,6 @@ try:
     from PIL import Image, ImageDraw, ImageFont
 except ImportError:
     exit("This script requires the pillow module\nInstall with: sudo pip install pillow")
-
-# Use `fc-list` to show a list of installed fonts on your system,
-# or `ls /usr/share/fonts/` and explore.
-
-FONT = ("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 12)
 # =======================================================================================
 
 # COLORS
@@ -76,6 +63,9 @@ def init():
 
 
 def display_text(message, color=WHITE):
+    # Use `fc-list` to show a list of installed fonts on your system,
+    # or `ls /usr/share/fonts/` and explore.
+    FONT = ('/usr/share/fonts/truetype/roboto/Roboto-Bold.ttf', 10)
 
     global u_height, u_width
 
