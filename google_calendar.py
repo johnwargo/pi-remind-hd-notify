@@ -55,6 +55,7 @@ class GoogleCalendar:
     _has_error = False
 
     _busy_only = False
+    _display_meeting_summary = True
     _reminder_only = False
     _use_reboot_counter = False
     _reboot_counter_limit = 0
@@ -81,7 +82,7 @@ class GoogleCalendar:
         if self._use_work_hours:
             self._work_start = work_start
             self._work_end = work_end
-            # TODO: Setup parameters for calculating work hour range
+        # TODO: Setup parameters for calculating work hour range
         logging.info('Calendar Initialization')
         logging.info('Calendar: Busy Only: {}'.format(self._busy_only))
         logging.info('Calendar: Reminder Only: {}'.format(self._reminder_only))
@@ -176,8 +177,6 @@ class GoogleCalendar:
         summary_list = []
         nearest_time = time_window
         for event in event_list:
-            # summary = event['summary'] if 'summary' in event else 'No Title'
-            # summary_list.append(summary)
             summary_list.append(event['summary'] if 'summary' in event else 'No Title')
             # find the nearest (soonest) meeting time
             nearest_time = min(nearest_time, event['minutes_to_start'])

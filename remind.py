@@ -47,14 +47,16 @@ FIRST_THRESHOLD = 5  # minutes, WHITE lights before this
 SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 
 # the config object properties, used when validating the config
-CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "device_id", "reboot_counter_limit", "reminder_only",
-                     "use_reboot_counter", "use_remote_notify", "use_working_hours", "work_start", "work_end"]
+CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "display_meeting_summary", "device_id",
+                     "reboot_counter_limit", "reminder_only", "use_reboot_counter", "use_remote_notify",
+                     "use_working_hours", "work_start", "work_end"]
 
 # initialize the classes we'll use as globals
 cal = None  # Google Calendar
 particle = None  # Particle Cloud
 
 debug_mode = False
+display_meeting_summary = True
 # whether or not you have a remote notify device connected. Use the config file to override
 use_remote_notify = False
 
@@ -76,7 +78,7 @@ def validate_config(config_object):
 
 
 def processing_loop():
-    global cal, particle
+    global cal, display_meeting_summary, particle
 
     # initialize the previous remote notify status
     previous_status = -1
@@ -128,24 +130,24 @@ def processing_loop():
                 if num_minutes >= FIRST_THRESHOLD:
                     # Flash the lights in WHITE
                     unicorn.flash_all(1, 0.25, unicorn.WHITE)
-                    # display the event summary
-                    unicorn.display_text(summary_string, unicorn.WHITE)
+                    if display_meeting_summary:
+                        unicorn.display_text(summary_string, unicorn.WHITE)
                     # set the activity light to WHITE as an indicator
                     unicorn.set_activity_light(unicorn.WHITE, False)
                 # is the appointment less than 5 minutes but more than 2 minutes from now?
                 elif num_minutes > SECOND_THRESHOLD:
                     # Flash the lights YELLOW
                     unicorn.flash_all(2, 0.25, unicorn.YELLOW)
-                    # display the event summary
-                    unicorn.display_text(summary_string, unicorn.YELLOW)
+                    if display_meeting_summary:
+                        unicorn.display_text(summary_string, unicorn.YELLOW)
                     # set the activity light to YELLOw as an indicator
                     unicorn.set_activity_light(unicorn.YELLOW, False)
                 else:
                     # hmmm, less than 2 minutes, almost time to start!
                     # swirl the lights. Longer every second closer to start time
                     unicorn.do_swirl(int((4 - num_minutes) * 50))
-                    # display the event summary
-                    unicorn.display_text(summary_string, unicorn.ORANGE)
+                    if display_meeting_summary:
+                        unicorn.display_text(summary_string, unicorn.ORANGE)
                     # set the activity light to SUCCESS_COLOR (green by default)
                     unicorn.set_activity_light(unicorn.ORANGE, False)
             else:
@@ -157,7 +159,7 @@ def processing_loop():
 
 
 def main():
-    global debug_mode, cal, particle, use_remote_notify
+    global cal, debug_mode, display_meeting_summary, particle, use_remote_notify
 
     # Setup the logger
     format = "%(asctime)s %(levelname)s %(message)s"
@@ -183,6 +185,7 @@ def main():
         valid_config, config_errors = validate_config(config)
         if valid_config:
             logging.info('Remind: Configuration file is valid')
+            display_meeting_summary = config['display_meeting_summary']
             use_remote_notify = config['use_remote_notify']
             use_reboot_counter = config['use_reboot_counter']
             reboot_counter_limit = config['reboot_counter_limit']
