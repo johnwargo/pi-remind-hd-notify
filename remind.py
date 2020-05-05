@@ -69,9 +69,9 @@ def validate_config(config_object):
     for i, val in enumerate(CONFIG_PROPERTIES):
         try:
             prop = config_object[val]
-            logging.info("Configuration property '{}' exists".format(val))
+            logging.info("Config: {}: {}".format(val, prop))
         except KeyError:
-            logging.info("Configuration property '{}' missing".format(val))
+            logging.info("Config: {}: MISSING".format(val))
             res.append(val)
     return len(res) < 1, ','.join(res)
 
@@ -105,6 +105,19 @@ def processing_loop():
             # num_minutes: How many minutes before the next meeting start time
             # summary_string: Concatenated list of upcoming meeting summaries
             # calendar_status: Remote Notify Status value (busy, tentative, free, off)
+
+            # should we update a remote notify device?
+            # Do this first since swirling the display takes longer
+            if use_remote_notify:
+                #  TODO: Do this on a separate thread
+                # Only change the status if it's different than the current status
+                if calendar_status != previous_status:
+                    logging.info('Setting Remote Notify status to {}'.format(calendar_status))
+                    # Capture the current status for next time
+                    previous_status = calendar_status
+                    # update the remote device status
+                    particle.set_status(calendar_status)
+
             # Any meetings coming up in the next num_minutes minutes?
             if num_minutes > 0:
                 if num_minutes != 1:
@@ -138,16 +151,6 @@ def processing_loop():
                     unicorn.set_activity_light(unicorn.ORANGE, False)
             else:
                 logging.debug('No upcoming events found')
-
-            # should we update a remote notify device?
-            if use_remote_notify:
-                # Only change the status if it's different than the current status
-                if calendar_status != previous_status:
-                    logging.info('Setting Remote Notify status to {}'.format(calendar_status))
-                    # Capture the current status for next time
-                    previous_status = calendar_status
-                    # update the remote device status
-                    particle.set_status(calendar_status)
 
         # wait a second then check again
         # You can always increase the sleep value below to check less often
@@ -226,7 +229,7 @@ def main():
             config['reminder_only'],
             use_reboot_counter,
             reboot_counter_limit,
-            config['use_work_hours'],
+            config['use_working_hours'],
             config['work_start'],
             config['work_end'],
         )

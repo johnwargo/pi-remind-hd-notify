@@ -12,44 +12,9 @@ If modifying these scopes, delete the file token.pickle.
 Install Unicorn HAT software
 pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib python-dateutil
 
-Project relies upon two external services:
 
-+ Google Calendar
-+ Particle Cloud 
-
-
-
-Copy `config.rename` to `config.json`
-you'll want to keep the original around as a reference methinks
-
-```json
-{
-  "access_token": "",
-  "device_id": "",
-  "ignore_tentative_appointments": false,
-  "use_reboot_counter": false,
-  "reboot_counter_limit": 10,
-  "use_remote_notify": false,
-  "debug_mode": false
-}
-```
-
-debug is cool because it outputs everything the app is doing
-Since the Google Calendar uses it as well, you get output from that library as well
-
-How working hours work
 
 ---
-
-The project is an enhancement to the [Pi Remind HD](https://github.com/johnwargo/pi-remind-hd) project enabling it to work with the [Remote Notify](https://github.com/johnwargo/particle-remote-notify-rgb) project. 
-
-The Pi Remind project connects to a user's Google Calendar, then displays appointment reminders on a [Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd).
-In this project, the status of the user's Google Calendar is also sent to the Remote Notify device, lighting a LED Red when the user is busy (based on the calendar), Yellow for tentative, and Green for free/available.
-
-Complete project setup instructions for the Pi Remind HD Notify project are in the project repository's [Wiki](https://github.com/johnwargo/pi-remind-hd-notify/wiki). Setup instructions for the Remote Notify device are in that project's [Wiki](https://github.com/johnwargo/particle-remote-notify-rgb/wiki).
-
-
-
 
 
 Copy your personal Google Calendar project's `client_secret.json` file (downloaded when you created your Google account) to the `pi-remind-hd` folder you just created. With everything in place, execute the reminder app using the following command:

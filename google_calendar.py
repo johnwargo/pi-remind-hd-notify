@@ -63,9 +63,15 @@ class GoogleCalendar:
     _work_start = ''
     _work_end = ''
 
-
-    def __init__(self, busy_only, reminder_only, use_reboot_counter, reboot_counter_limit, use_work_hours, work_start,
-                 work_end):
+    def __init__(self,
+                 busy_only,
+                 reminder_only,
+                 use_reboot_counter,
+                 reboot_counter_limit,
+                 use_work_hours,
+                 work_start,
+                 work_end
+                 ):
         # Populate the local properties
         self._busy_only = busy_only
         self._reminder_only = reminder_only
