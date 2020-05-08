@@ -10,6 +10,8 @@
 
 The Pi Remind project connects to a user's Google Calendar, then displays appointment reminders on a [Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd) LED array.
 
+> **Note:** Installation, Configuration, and operation instructions are all published to the [Wiki](https://github.com/johnwargo/pi-remind-hd-notify/wiki)
+
 The project is the latest version of Pi Remind, a Raspberry Pi-based project for notifying users of upcoming appointments in Google Calendar. I built this project because I often missed appointments because I was engrossed in my work or because I switched away from my work computer to a different one and didn't hear the reminder ping on my work laptop. I created this project to give me a visual reminder, an obnoxious, silent, countdown timer I can set on my desk to flash lights at me as a warning before my next meeting starts.
 
 There are several versions of this project:
