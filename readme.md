@@ -5,7 +5,7 @@
 ## Tasks
 
 * Validate that the config file will validate if the access token or device ID are empty.
-* Finish the docs (in the Wiki)
+* Finish the working hours implementation
 * Add Troubleshooting section to the Wiki
 * Move search limit (time) to the config file (not gonna happen soon)
 
@@ -29,6 +29,8 @@ The biggest change in this version of the project is that Pi Remind now works wi
 Pi Remind uses a network connected Raspberry Pi and a [Pimoroni Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd) to flash the reminder. The project was originally built using the Pimoroni Unicorn HAT, and published in Make Magazine (makezine.com): [Get a Flashing Meeting Reminder with a Raspberry Pi](http://makezine.com/projects/get-a-flashing-meeting-reminder-with-a-raspberry-pi/). For this version, I upgraded the Unicorn HAT to the High Definition (HD) version which will allow me to display much cleaner and more interesting color patterns. The HD version of the Unicorn HAT has 256 LEDs vs the original Unicorn HAT's 64, for much higher pixel resolution.
 
 Next, head over to the  [Wiki](https://github.com/johnwargo/pi-remind-hd-notify/wiki) to learn how to assemble, install, configure, and use this project.
+
+> **Note:** This software is provided as is, with no support or warranty. If you have an issue with the project, don't call or email me, use the project's [Issues](https://github.com/johnwargo/pi-remind-hd-notify/issues) area to ask your questions. I usually check email at least once a day and will respond as soon as I can. Posting to the issues page also lets other users learn about potential issues and even jump in and help you solve it.
 
 ***
 
