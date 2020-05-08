@@ -4,9 +4,10 @@
 
 ## Tasks
 
-+ Finish the docs (in the Wiki)
-+ Add Troubleshooting section to the Wiki
-+ Move search limit (time) to the config file (not gonna happen soon)
+* Validate that the config file will validate if the access token or device ID are empty.
+* Finish the docs (in the Wiki)
+* Add Troubleshooting section to the Wiki
+* Move search limit (time) to the config file (not gonna happen soon)
 
 The Pi Remind project connects to a user's Google Calendar, then displays appointment reminders on a [Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd) LED array.
 
