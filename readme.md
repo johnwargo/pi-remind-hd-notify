@@ -10,7 +10,7 @@
 
 The Pi Remind project connects to a user's Google Calendar, then displays appointment reminders on a [Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd) LED array.
 
-> **Note:** Installation, Configuration, and operation instructions are all published to the [Wiki](https://github.com/johnwargo/pi-remind-hd-notify/wiki)
+> **Note:** Assembly, Installation, Configuration, and Operation instructions are all published to the [Wiki](https://github.com/johnwargo/pi-remind-hd-notify/wiki)
 
 The project is the latest version of Pi Remind, a Raspberry Pi-based project for notifying users of upcoming appointments in Google Calendar. I built this project because I often missed appointments because I was engrossed in my work or because I switched away from my work computer to a different one and didn't hear the reminder ping on my work laptop. I created this project to give me a visual reminder, an obnoxious, silent, countdown timer I can set on my desk to flash lights at me as a warning before my next meeting starts.
 
@@ -26,6 +26,8 @@ The biggest change in this version of the project is that Pi Remind now works wi
 ![Remote Notify Prototype](https://github.com/johnwargo/pi-remind-hd-notify/blob/master/images/remote-notify-prototype.png)
 
 Pi Remind uses a network connected Raspberry Pi and a [Pimoroni Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd) to flash the reminder. The project was originally built using the Pimoroni Unicorn HAT, and published in Make Magazine (makezine.com): [Get a Flashing Meeting Reminder with a Raspberry Pi](http://makezine.com/projects/get-a-flashing-meeting-reminder-with-a-raspberry-pi/). For this version, I upgraded the Unicorn HAT to the High Definition (HD) version which will allow me to display much cleaner and more interesting color patterns. The HD version of the Unicorn HAT has 256 LEDs vs the original Unicorn HAT's 64, for much higher pixel resolution.
+
+Next, head over to the  [Wiki](https://github.com/johnwargo/pi-remind-hd-notify/wiki) to learn how to assemble, install, configure, and use this project.
 
 ***
 
