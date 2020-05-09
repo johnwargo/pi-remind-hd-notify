@@ -1,6 +1,6 @@
 # Raspberry Pi Appointment Reminder HD - Notify Edition
 
-> **Note:** This project is still in active development, so there's still things I must do to finish it up.
+**Note:** This project is still in active development, so there's still things I must do to finish it up.
 
 * Finish the working hours implementation
 
