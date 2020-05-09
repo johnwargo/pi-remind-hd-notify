@@ -1,12 +1,8 @@
 # Raspberry Pi Appointment Reminder HD - Notify Edition
 
-> **Note:** This project is still in active development, so there's still some things I need to do to finish it up.
-
-## Tasks
+> **Note:** This project is still in active development, so there's still things I must do to finish it up.
 
 * Finish the working hours implementation
-* Add Troubleshooting section to the Wiki
-* Add Limitations section to the Wiki
 
 The Pi Remind project connects to a user's Google Calendar, then displays appointment reminders on a [Unicorn HAT HD](https://shop.pimoroni.com/products/unicorn-hat-hd) LED array.
 
