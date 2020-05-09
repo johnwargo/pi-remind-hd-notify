@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # the python executable we're running
-home_folder="/home/pi/pi-remind-hd"
+home_folder="/home/pi/pi-remind-hd-notify"
 start_file="./remind.py"
 
 # change to the pi user's home folder, that way everything happens in the same folder
