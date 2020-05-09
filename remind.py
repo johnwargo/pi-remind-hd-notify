@@ -225,24 +225,24 @@ def main():
         logging.info('Remind: Reboot enabled ({} retries)'.format(reboot_counter_limit))
 
     logging.info('Remind: Initializing Google Calendar interface')
-    try:
-        cal = GoogleCalendar(
-            config['busy_only'],
-            config['reminder_only'],
-            use_reboot_counter,
-            reboot_counter_limit,
-            config['use_working_hours'],
-            config['work_start'],
-            config['work_end'],
-        )
-    except Exception as e:
-        logging.error('Remind: Unable to initialize Google Calendar API')
-        logging.error('Exception type: {}'.format(type(e)))
-        logging.error('Error: {}'.format(sys.exc_info()[0]))
-        unicorn.set_all(unicorn.FAILURE_COLOR)
-        time.sleep(5)
-        unicorn.off()
-        sys.exit(0)
+    # try:
+    cal = GoogleCalendar(
+        config['busy_only'],
+        config['reminder_only'],
+        use_reboot_counter,
+        reboot_counter_limit,
+        config['use_working_hours'],
+        config['work_start'],
+        config['work_end'],
+    )
+    # except Exception as e:
+    #     logging.error('Remind: Unable to initialize Google Calendar API')
+    #     logging.error('Exception type: {}'.format(type(e)))
+    #     logging.error('Error: {}'.format(sys.exc_info()[0]))
+    #     unicorn.set_all(unicorn.FAILURE_COLOR)
+    #     time.sleep(5)
+    #     unicorn.off()
+    #     sys.exit(0)
 
     logging.info('Remind: Application initialized')
 

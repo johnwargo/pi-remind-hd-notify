@@ -14,6 +14,7 @@ import os
 import socket
 import pytz
 from dateutil import parser
+# from datetime import datetime
 # Google Calendar libraries
 import datetime
 import pickle
@@ -80,9 +81,10 @@ class GoogleCalendar:
         self._reboot_counter_limit = reboot_counter_limit
         self._use_work_hours = use_work_hours
         if self._use_work_hours:
-            self._work_start = work_start
-            self._work_end = work_end
-        # TODO: Setup parameters for calculating work hour range
+            self._work_start = datetime.datetime.strptime(work_start, '%H:%M').time()
+            self._work_end = datetime.datetime.strptime(work_end, '%H:%M').time()
+            logging.debug('Work hours start: {}'.format(work_start))
+            logging.debug('Work hours end: {}'.format(work_end))
         logging.info('Calendar Initialization')
         logging.info('Calendar: Busy Only: {}'.format(self._busy_only))
         logging.info('Calendar: Reminder Only: {}'.format(self._reminder_only))
@@ -153,12 +155,13 @@ class GoogleCalendar:
         # if we got this far, then there must not be a reminder set
         return False
 
-    @staticmethod
-    def _is_working_hours(now):
-        # TODO: Implement this
-        logging.debug('_is_working_hours({})'.format(now))
+    def _is_working_hours(self, event):
+        logging.debug('_is_working_hours({})'.format(event))
+        # event_time = event.strftime('%H:%M')
+        event_time = event.time()
+        logging.debug('Event Time: {}'.format(event_time))
         # is the current time within working hours?
-        return True
+        return self._work_start < event_time < self._work_end
 
     @staticmethod
     def _process_upcoming_event(event, start, time_delta):
@@ -217,7 +220,10 @@ class GoogleCalendar:
         # set our base calendar status, assume we're turning the Remote Notify status LED off
         current_status = Status.OFF.value
         if self._is_working_hours(now):
+            logging.debug('Current time is within working hours')
             current_status = Status.FREE.value
+        else:
+            logging.debug('Current time is not within working hours')
 
         # Did we get any events back?
         if not event_list:
