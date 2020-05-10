@@ -157,7 +157,6 @@ class GoogleCalendar:
 
     def _is_working_hours(self, event):
         logging.debug('_is_working_hours({})'.format(event))
-        # event_time = event.strftime('%H:%M')
         event_time = event.time()
         logging.debug('Event Time: {}'.format(event_time))
         # is the current time within working hours?
@@ -219,11 +218,23 @@ class GoogleCalendar:
 
         # set our base calendar status, assume we're turning the Remote Notify status LED off
         current_status = Status.OFF.value
-        if self._is_working_hours(now):
-            logging.debug('Current time is within working hours')
-            current_status = Status.FREE.value
+        if self._use_work_hours:
+            if self._is_working_hours(now):
+                # TODO: Implement this as a setting
+                # Is it the weekend?
+                if datetime.datetime.today().weekday() < 5:
+                    # No? Working hours on a weekday, so Free
+                    logging.debug('Current time is within working hours')
+                    current_status = Status.FREE.value
+                else:
+                    # working hours, but Weekend, should be OFF
+                    logging.debug('Skipping working hours, it\'s the weekend')
+            else:
+                # Not working hours, should be OFF
+                logging.debug('Current time is not within working hours')
         else:
-            logging.debug('Current time is not within working hours')
+            # not using work hours, always set status to FREE
+            current_status = Status.FREE.value
 
         # Did we get any events back?
         if not event_list:
