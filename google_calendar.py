@@ -234,6 +234,7 @@ class GoogleCalendar:
                 logging.debug('Current time is not within working hours')
         else:
             # not using work hours, always set status to FREE
+            logging.debug('Working hours disabled')
             current_status = Status.FREE.value
 
         # Did we get any events back?
