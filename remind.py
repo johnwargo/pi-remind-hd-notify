@@ -14,7 +14,7 @@
 
     Google Calendar example code: https://developers.google.com/google-apps/calendar/quickstart/python
 ********************************************************************************************************************"""
-# TODO: Add support for working hours (off vs. free)
+# TODO: Add option to ignore weekends
 # TODO: Make search limit a config setting
 # TODO: Move reboot counter to remind.py
 # TODO: Use threads for call to Particle Cloud
