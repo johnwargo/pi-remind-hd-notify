@@ -219,7 +219,8 @@ class GoogleCalendar:
         # set our base calendar status, assume we're turning the Remote Notify status LED off
         current_status = Status.OFF.value
         if self._use_work_hours:
-            if self._is_working_hours(now):
+            # is the current time within working hours?
+            if self._is_working_hours(datetime.datetime.now()):
                 # TODO: Implement this as a setting
                 # Is it the weekend?
                 if datetime.datetime.today().weekday() < 5:
