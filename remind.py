@@ -48,8 +48,8 @@ SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 
 # the config object properties, used when validating the config
 CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "display_meeting_summary", "device_id",
-                     "reboot_counter_limit", "reminder_only", "use_reboot_counter", "use_remote_notify",
-                     "use_working_hours", "work_start", "work_end"]
+                     "ignore_in_summary", "reboot_counter_limit", "reminder_only", "use_reboot_counter",
+                     "use_remote_notify", "use_working_hours", "work_start", "work_end"]
 
 # initialize the classes we'll use as globals
 cal = None  # Google Calendar
@@ -228,6 +228,7 @@ def main():
     try:
         cal = GoogleCalendar(
             config['busy_only'],
+            config['ignore_in_summary'],
             config['reminder_only'],
             use_reboot_counter,
             reboot_counter_limit,

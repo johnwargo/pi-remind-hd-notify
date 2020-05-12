@@ -57,6 +57,7 @@ class GoogleCalendar:
 
     _busy_only = False
     _display_meeting_summary = True
+    _ignore_in_summary = []
     _reminder_only = False
     _use_reboot_counter = False
     _reboot_counter_limit = 0
@@ -67,6 +68,7 @@ class GoogleCalendar:
 
     def __init__(self,
                  busy_only,
+                 ignore_in_summary,
                  reminder_only,
                  use_reboot_counter,
                  reboot_counter_limit,
@@ -76,6 +78,7 @@ class GoogleCalendar:
                  ):
         # Populate the local properties
         self._busy_only = busy_only
+        self._ignore_in_summary = ignore_in_summary
         self._reminder_only = reminder_only
         self._use_reboot_counter = use_reboot_counter
         self._reboot_counter_limit = reboot_counter_limit
@@ -87,6 +90,7 @@ class GoogleCalendar:
             logging.debug('Work hours end: {}'.format(work_end))
         logging.info('Calendar Initialization')
         logging.info('Calendar: Busy Only: {}'.format(self._busy_only))
+        logging.info('Calendar: Ignore in Summary: {}'.format(self._ignore_in_summary))
         logging.info('Calendar: Reminder Only: {}'.format(self._reminder_only))
         logging.info('Calendar: Reboot Counter: {}'.format(self._use_reboot_counter))
         if self._use_reboot_counter:
@@ -154,6 +158,18 @@ class GoogleCalendar:
                 return True
         # if we got this far, then there must not be a reminder set
         return False
+
+    def ignore_event(self, event):
+        if len(self._ignore_in_summary) > 0:
+            # get our event summary string
+            event_summary = event['summary'] if 'summary' in event else 'No Title'
+            # loop through the ignore list
+            for key in self._ignore_in_summary:
+                if key in event_summary:
+                    return True
+            return False
+        else:
+            return False
 
     def _is_working_hours(self, event):
         logging.debug('_is_working_hours({})'.format(event))

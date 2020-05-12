@@ -3,6 +3,7 @@
   "busy_only": false,
   "device_id": "",
   "display_meeting_summary": true,
+  "ignore_in_summary": [],
   "reminder_only": false,
   "use_reboot_counter": true,
   "reboot_counter_limit": 10,
