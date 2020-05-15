@@ -218,11 +218,12 @@ class GoogleCalendar:
 
             # set our base calendar status, assume we're turning the Remote Notify status LED off
             current_status = Status.OFF.value
+            # Now check to see whether the LED should be set to Green (free)
             if self._use_work_hours:
                 # is the current time within working hours?
                 if self._is_working_hours(datetime.datetime.now()):
-                    # TODO: Implement this as a setting
                     # Is it the weekend?
+                    # TODO: Implement this as a setting
                     if datetime.datetime.today().weekday() < 5:
                         # No? Working hours on a weekday, so Free
                         logging.debug('Current time is within working hours')
