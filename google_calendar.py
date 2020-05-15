@@ -22,20 +22,6 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-# ========================================================================================
-# Borrowed from: https://github.com/pimoroni/unicorn-hat-hd/blob/master/examples/text.py
-# ========================================================================================
-try:
-    from PIL import Image, ImageDraw, ImageFont
-except ImportError:
-    exit("This script requires the pillow module\nInstall with: sudo pip install pillow")
-
-# Use `fc-list` to show a list of installed fonts on your system,
-# or `ls /usr/share/fonts/` and explore.
-
-FONT = ("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 12)
-# =============================================================================
-
 reboot_counter = 0
 
 # Initialize the Google Calendar API stuff
@@ -339,7 +325,6 @@ class GoogleCalendar:
                         logging.info('Rebooting in {} seconds'.format(i))
                         time.sleep(1)
                     os.system("sudo reboot")
-
 
     # def get_next_event(self, time_window):
     #     global reboot_counter
