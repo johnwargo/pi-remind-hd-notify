@@ -144,10 +144,11 @@ class GoogleCalendar:
     def ignore_event(self, event):
         if len(self._ignore_in_summary) > 0:
             # get our event summary string
-            event_summary = event['summary'] if 'summary' in event else 'No Title'
+            event_summary = event['summary'] if 'summary' in event else 'no title'
             # loop through the ignore list
             for key in self._ignore_in_summary:
-                if key in event_summary:
+                # see if the ignore keyword is in the lower case summary
+                if key in event_summary.lower():
                     return True
             return False
         else:

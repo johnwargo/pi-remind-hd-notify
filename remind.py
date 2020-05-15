@@ -116,8 +116,19 @@ def processing_loop():
                     logging.info('Setting Remote Notify status to {}'.format(calendar_status))
                     # Capture the current status for next time
                     previous_status = calendar_status
-                    # update the remote device status
-                    particle.set_status(calendar_status)
+                    try:
+                        # update the remote device status
+                        particle.set_status(calendar_status)
+                    except Exception as e:
+                        # Something went wrong, tell the user (just in case they have a monitor on the Pi)
+                        logging.error('Exception type: {}'.format(type(e)))
+                        # not much else we can do here except to skip this attempt and try again later
+                        logging.error('Error: {}'.format(sys.exc_info()[0]))
+                        # light up the array with FAILURE_COLOR LEDs to indicate a problem
+                        # unicorn.flash_all(1, 1, unicorn.FAILURE_COLOR)
+                        # now set the current_activity_light to FAILURE_COLOR to indicate an error state
+                        # with the last reading
+                        unicorn.set_activity_light(unicorn.FAILURE_COLOR, False)
 
             # Any meetings coming up in the next num_minutes minutes?
             if num_minutes > 0:
