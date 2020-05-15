@@ -141,14 +141,12 @@ class GoogleCalendar:
         # if we got this far, then there must not be a reminder set
         return False
 
-    def ignore_event(self, event):
+    def ignore_event(self, event_summary):
         if len(self._ignore_in_summary) > 0:
-            # get our event summary string
-            event_summary = event['summary'] if 'summary' in event else 'no title'
             # loop through the ignore list
             for key in self._ignore_in_summary:
                 # see if the ignore keyword is in the lower case summary
-                if key in event_summary.lower():
+                if key in event_summary:
                     return True
             return False
         else:
@@ -260,45 +258,53 @@ class GoogleCalendar:
                     # we only want events that have a start time (skips all day events)
                     # do we have a start time for this event?
                     if start:
-                        # When does the appointment start?
-                        # Convert the string it into a Python dateTime object so we can do math on it
-                        event_start = parser.parse(start)
-                        # does the event start in the future?
-                        if current_time < event_start:
-                            logging.debug('Located an upcoming event')
-                            time_delta = event_start - current_time
-                            new_event = self._process_upcoming_event(event, start, time_delta)
-                            logging.debug('New Event: {}'.format(new_event))
-                            # we have an upcoming event
-                            if self._reminder_only:
-                                # only use events that have a reminder set
-                                if self._has_reminder(event):
+                        # get our event summary string
+                        event_summary = event['summary'] if 'summary' in event else 'no title'
+                        # is this one of the events we're support to just ignore?
+                        if not self.ignore_event(event_summary.lower()):
+                            # When does the appointment start?
+                            # Convert the string it into a Python dateTime object so we can do math on it
+                            event_start = parser.parse(start)
+                            # does the event start in the future?
+                            if current_time < event_start:
+                                logging.info('Upcoming event: {}'.format(event_summary))
+                                time_delta = event_start - current_time
+                                new_event = self._process_upcoming_event(event, start, time_delta)
+                                logging.debug('New Event: {}'.format(new_event))
+                                # we have an upcoming event
+                                if self._reminder_only:
+                                    # only use events that have a reminder set
+                                    if self._has_reminder(event):
+                                        upcoming_events.append(new_event)
+                                else:
+                                    # add the event to our upcoming event list
                                     upcoming_events.append(new_event)
                             else:
-                                # add the event to our upcoming event list
-                                upcoming_events.append(new_event)
-                        else:
-                            logging.debug('Located an ongoing event')
-                            # we have an ongoing/current event
-                            # Are we processing busy events only?
-                            if self._busy_only:
-                                # then is the user marked busy for this event?
-                                if self._is_marked_busy(event):
-                                    # add the event to our current event list
-                                    current_status = Status.BUSY.value
-                            else:
-                                if self._is_marked_busy(event):
-                                    # add the event to our current event list
-                                    current_status = min(current_status, Status.BUSY.value)
+                                logging.info('Ongoing event: {}'.format(event_summary))
+                                # we have an ongoing/current event
+                                # Are we processing busy events only?
+                                if self._busy_only:
+                                    # then is the user marked busy for this event?
+                                    if self._is_marked_busy(event):
+                                        # add the event to our current event list
+                                        current_status = Status.BUSY.value
                                 else:
-                                    current_status = min(current_status, Status.TENTATIVE.value)
+                                    if self._is_marked_busy(event):
+                                        # add the event to our current event list
+                                        current_status = min(current_status, Status.BUSY.value)
+                                    else:
+                                        current_status = min(current_status, Status.TENTATIVE.value)
+                        else:
+                            # We're ignoring the event because it contains some strings we don't care about
+                            logging.info('Ignoring event: {}'.format(event.summary))
+
                 # start processing our lists
                 # do we have any upcoming events?
                 if len(upcoming_events) > 0:
                     # then process the list and figure out when the next one is
                     num_minutes, summary_string = self._process_upcoming_events(upcoming_events, time_window)
                 else:
-                    # No? Then return an invalid number of minutes to the next appt.
+                    # No? Then return an invalid number of minutes to the next appointment
                     num_minutes = -1
                     summary_string = ''
                 # Return values: num_minutes, summary_string, calendar_status
