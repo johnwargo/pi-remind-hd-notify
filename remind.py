@@ -14,10 +14,10 @@
 
     Google Calendar example code: https://developers.google.com/google-apps/calendar/quickstart/python
 ********************************************************************************************************************"""
-# TODO: Add option to ignore weekends
+# TODO: Implement weekend days as a config setting
 # TODO: Make search limit a config setting
-# TODO: Move reboot counter to remind.py
-# TODO: Use threads for call to Particle Cloud
+# TODO: Move reboot counter to remind.py (?)
+# TODO: Use threads for calls to the Particle Cloud
 
 from __future__ import print_function
 
