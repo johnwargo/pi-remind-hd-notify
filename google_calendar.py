@@ -9,11 +9,13 @@ from status import Status
 import unicorn_hat as unicorn
 
 # other modules
+from dateutil import parser
 import logging
 import os
-import socket
 import pytz
-from dateutil import parser
+import socket
+import sys
+
 # from datetime import datetime
 # Google Calendar libraries
 import datetime
@@ -22,28 +24,10 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-# ========================================================================================
-# Borrowed from: https://github.com/pimoroni/unicorn-hat-hd/blob/master/examples/text.py
-# ========================================================================================
-try:
-    from PIL import Image, ImageDraw, ImageFont
-except ImportError:
-    exit("This script requires the pillow module\nInstall with: sudo pip install pillow")
-
-# Use `fc-list` to show a list of installed fonts on your system,
-# or `ls /usr/share/fonts/` and explore.
-
-FONT = ("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf", 12)
-# =============================================================================
-
 reboot_counter = 0
 
 # Initialize the Google Calendar API stuff
-# Google says: If modifying these scopes, delete your previously saved
-# credentials at ~/.credentials/credentials.json
-# On the pi, it's in /root/.credentials/
-# SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
-# If modifying these scopes, delete the file token.pickle.
+# If modifying these scopes, delete the file `~/pi-remind-hd-notify/token.pickle`
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
 
@@ -57,6 +41,7 @@ class GoogleCalendar:
 
     _busy_only = False
     _display_meeting_summary = True
+    _ignore_in_summary = []
     _reminder_only = False
     _use_reboot_counter = False
     _reboot_counter_limit = 0
@@ -67,6 +52,7 @@ class GoogleCalendar:
 
     def __init__(self,
                  busy_only,
+                 ignore_in_summary,
                  reminder_only,
                  use_reboot_counter,
                  reboot_counter_limit,
@@ -76,6 +62,7 @@ class GoogleCalendar:
                  ):
         # Populate the local properties
         self._busy_only = busy_only
+        self._ignore_in_summary = ignore_in_summary
         self._reminder_only = reminder_only
         self._use_reboot_counter = use_reboot_counter
         self._reboot_counter_limit = reboot_counter_limit
@@ -87,6 +74,7 @@ class GoogleCalendar:
             logging.debug('Work hours end: {}'.format(work_end))
         logging.info('Calendar Initialization')
         logging.info('Calendar: Busy Only: {}'.format(self._busy_only))
+        logging.info('Calendar: Ignore in Summary: {}'.format(self._ignore_in_summary))
         logging.info('Calendar: Reminder Only: {}'.format(self._reminder_only))
         logging.info('Calendar: Reboot Counter: {}'.format(self._use_reboot_counter))
         if self._use_reboot_counter:
@@ -155,6 +143,17 @@ class GoogleCalendar:
         # if we got this far, then there must not be a reminder set
         return False
 
+    def ignore_event(self, event_summary):
+        if len(self._ignore_in_summary) > 0:
+            # loop through the ignore list
+            for key in self._ignore_in_summary:
+                # see if the ignore keyword is in the lower case summary
+                if key in event_summary:
+                    return True
+            return False
+        else:
+            return False
+
     def _is_working_hours(self, event):
         logging.debug('_is_working_hours({})'.format(event))
         event_time = event.time()
@@ -199,109 +198,143 @@ class GoogleCalendar:
         if not self._has_error:
             # turn on a sequential CHECKING_COLOR LED to show that you're requesting data from the Google Calendar API
             unicorn.set_activity_light(unicorn.CHECKING_COLOR, True)
+        try:
             # ask Google for the calendar entries
-        events_result = self._service.events().list(
-            # get all of them between now and 10 minutes from now
-            calendarId='primary',
-            timeMin=now.isoformat() + 'Z',
-            timeMax=then.isoformat() + 'Z',
-            singleEvents=True,
-            orderBy='startTime').execute()
-        # turn on the SUCCESS_COLOR LED so you'll know data was returned from the Google calendar API
-        unicorn.set_activity_light(unicorn.SUCCESS_COLOR, False)
-        # Get the event list
-        event_list = events_result.get('items', [])
-        # initialize this here, setting it to true later if we encounter an error
-        self._has_error = False
-        # reset the reboot counter, since everything worked so far
-        reboot_counter = 0
+            events_result = self._service.events().list(
+                # get all of them between now and 10 minutes from now
+                calendarId='primary',
+                timeMin=now.isoformat() + 'Z',
+                timeMax=then.isoformat() + 'Z',
+                singleEvents=True,
+                orderBy='startTime').execute()
+            # turn on the SUCCESS_COLOR LED so you'll know data was returned from the Google calendar API
+            unicorn.set_activity_light(unicorn.SUCCESS_COLOR, False)
+            # Get the event list
+            event_list = events_result.get('items', [])
+            # initialize this here, setting it to true later if we encounter an error
+            self._has_error = False
+            # reset the reboot counter, since everything worked so far
+            reboot_counter = 0
 
-        # set our base calendar status, assume we're turning the Remote Notify status LED off
-        current_status = Status.OFF.value
-        if self._use_work_hours:
-            # is the current time within working hours?
-            if self._is_working_hours(datetime.datetime.now()):
-                # TODO: Implement this as a setting
-                # Is it the weekend?
-                if datetime.datetime.today().weekday() < 5:
-                    # No? Working hours on a weekday, so Free
-                    logging.debug('Current time is within working hours')
-                    current_status = Status.FREE.value
-                else:
-                    # working hours, but Weekend, should be OFF
-                    logging.debug('Skipping working hours, it\'s the weekend')
-            else:
-                # Not working hours, should be OFF
-                logging.debug('Current time is not within working hours')
-        else:
-            # not using work hours, always set status to FREE
-            logging.debug('Working hours disabled')
-            current_status = Status.FREE.value
-
-        # Did we get any events back?
-        if not event_list:
-            # no? so nothing to do right now
-            logging.info('No calendar entries returned')
-            # Return values: num_minutes, summary_string, calendar_status
-            return 0, '', current_status
-        else:
-            # what time is it now?
-            current_time = pytz.utc.localize(datetime.datetime.utcnow())
-            # an empty list of upcoming events, will populate in the following loop
-            upcoming_events = []
-            logging.info('Events returned: {}'.format(len(event_list)))
-            # loop through the events in the list
-            for event in event_list:
-                # write the event to the console
-                logging.debug('Event: {}'.format(event))
-                # we only care about events that have a start time
-                start = event['start'].get('dateTime')
-                # we only want events that have a start time (skips all day events)
-                # do we have a start time for this event?
-                if start:
-                    # When does the appointment start?
-                    # Convert the string it into a Python dateTime object so we can do math on it
-                    event_start = parser.parse(start)
-                    # does the event start in the future?
-                    if current_time < event_start:
-                        logging.debug('Located an upcoming event')
-                        time_delta = event_start - current_time
-                        new_event = self._process_upcoming_event(event, start, time_delta)
-                        logging.debug('New Event: {}'.format(new_event))
-                        # we have an upcoming event
-                        if self._reminder_only:
-                            # only use events that have a reminder set
-                            if self._has_reminder(event):
-                                upcoming_events.append(new_event)
-                        else:
-                            # add the event to our upcoming event list
-                            upcoming_events.append(new_event)
+            # set our base calendar status, assume we're turning the Remote Notify status LED off
+            current_status = Status.OFF.value
+            # Now check to see whether the LED should be set to Green (free)
+            if self._use_work_hours:
+                # is the current time within working hours?
+                if self._is_working_hours(datetime.datetime.now()):
+                    # Is it the weekend?
+                    # TODO: Implement this as a setting
+                    if datetime.datetime.today().weekday() < 5:
+                        # No? Working hours on a weekday, so Free
+                        logging.debug('Current time is within working hours')
+                        current_status = Status.FREE.value
                     else:
-                        logging.debug('Located an ongoing event')
-                        # we have an ongoing/current event
-                        # Are we processing busy events only?
-                        if self._busy_only:
-                            # then is the user marked busy for this event?
-                            if self._is_marked_busy(event):
-                                # add the event to our current event list
-                                current_status = Status.BUSY.value
-                        else:
-                            if self._is_marked_busy(event):
-                                # add the event to our current event list
-                                current_status = min(current_status, Status.BUSY.value)
-                            else:
-                                current_status = min(current_status, Status.TENTATIVE.value)
-            # start processing our lists
-            # do we have any upcoming events?
-            if len(upcoming_events) > 0:
-                # then process the list and figure out when the next one is
-                num_minutes, summary_string = self._process_upcoming_events(upcoming_events, time_window)
+                        # working hours, but Weekend, should be OFF
+                        logging.debug('Skipping working hours, it\'s the weekend')
+                else:
+                    # Not working hours, should be OFF
+                    logging.debug('Current time is not within working hours')
             else:
-                # No? Then return an invalid number of minutes to the next appt.
-                num_minutes = -1
-                summary_string = ''
-            # Return values: num_minutes, summary_string, calendar_status
-            return num_minutes, summary_string, current_status
+                # not using work hours, always set status to FREE
+                logging.debug('Working hours disabled')
+                current_status = Status.FREE.value
+
+            # Did we get any events back?
+            if not event_list:
+                # no? so nothing to do right now
+                logging.info('No calendar entries returned')
+                # Return values: num_minutes, summary_string, calendar_status
+                return 0, '', current_status
+            else:
+                # what time is it now?
+                current_time = pytz.utc.localize(datetime.datetime.utcnow())
+                # an empty list of upcoming events, will populate in the following loop
+                upcoming_events = []
+                logging.info('Events returned: {}'.format(len(event_list)))
+                # loop through the events in the list
+                for event in event_list:
+                    # write the event to the console
+                    logging.debug('Event: {}'.format(event))
+                    # we only care about events that have a start time
+                    start = event['start'].get('dateTime')
+                    # we only want events that have a start time (skips all day events)
+                    # do we have a start time for this event?
+                    if start:
+                        # get our event summary string
+                        event_summary = event['summary'] if 'summary' in event else 'no title'
+                        # is this one of the events we're support to just ignore?
+                        if not self.ignore_event(event_summary.lower()):
+                            # When does the appointment start?
+                            # Convert the string it into a Python dateTime object so we can do math on it
+                            event_start = parser.parse(start)
+                            # does the event start in the future?
+                            if current_time < event_start:
+                                logging.info('Upcoming event: {}'.format(event_summary))
+                                time_delta = event_start - current_time
+                                new_event = self._process_upcoming_event(event, start, time_delta)
+                                logging.debug('New Event: {}'.format(new_event))
+                                # we have an upcoming event
+                                if self._reminder_only:
+                                    # only use events that have a reminder set
+                                    if self._has_reminder(event):
+                                        upcoming_events.append(new_event)
+                                else:
+                                    # add the event to our upcoming event list
+                                    upcoming_events.append(new_event)
+                            else:
+                                logging.info('Ongoing event: {}'.format(event_summary))
+                                # we have an ongoing/current event
+                                # Are we processing busy events only?
+                                if self._busy_only:
+                                    # then is the user marked busy for this event?
+                                    if self._is_marked_busy(event):
+                                        # add the event to our current event list
+                                        current_status = Status.BUSY.value
+                                else:
+                                    if self._is_marked_busy(event):
+                                        # add the event to our current event list
+                                        current_status = min(current_status, Status.BUSY.value)
+                                    else:
+                                        current_status = min(current_status, Status.TENTATIVE.value)
+                        else:
+                            # We're ignoring the event because it contains some strings we don't care about
+                            logging.info('Ignoring event: {}'.format(event_summary))
+
+                # start processing our lists
+                # do we have any upcoming events?
+                if len(upcoming_events) > 0:
+                    # then process the list and figure out when the next one is
+                    num_minutes, summary_string = self._process_upcoming_events(upcoming_events, time_window)
+                else:
+                    # No? Then return an invalid number of minutes to the next appointment
+                    num_minutes = -1
+                    summary_string = ''
+                # Return values: num_minutes, summary_string, calendar_status
+                return num_minutes, summary_string, current_status
+        except Exception as e:
+            # Something went wrong, tell the user (just in case they have a monitor on the Pi)
+            logging.error('Exception type: {}'.format(type(e)))
+            # not much else we can do here except to skip this attempt and try again later
+            logging.error('Error: {}'.format(sys.exc_info()[0]))
+            # light up the array with FAILURE_COLOR LEDs to indicate a problem
+            unicorn.flash_all(1, 2, unicorn.FAILURE_COLOR)
+            # now set the current_activity_light to FAILURE_COLOR to indicate an error state
+            # with the last reading
+            unicorn.set_activity_light(unicorn.FAILURE_COLOR, False)
+            # we have an error, so make note of it
+            self._has_error = True
+            # check to see if reboot is enabled
+            if self._use_reboot_counter:
+                # increment the counter
+                reboot_counter += 1
+                logging.info('Incrementing the reboot counter ({})'.format(reboot_counter))
+                # did we reach the reboot threshold?
+                if reboot_counter == self._reboot_counter_limit:
+                    # Reboot the Pi
+                    for i in range(1, 10):
+                        logging.info('Rebooting in {} seconds'.format(i))
+                        time.sleep(1)
+                    os.system("sudo reboot")
 
     # def get_next_event(self, time_window):
     #     global reboot_counter

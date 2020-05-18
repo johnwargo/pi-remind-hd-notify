@@ -1,5 +1,13 @@
 # Changelog
 
+## 2020-05-18
+
++ Added an option to ignore appointment summaries that contain specific values:
+
+```json
+"ignore_in_summary": ["[block]", "(via clockwise)", "[anna]", "[august]", "[elizabeth]"],
+```
+
 ## 2020-05-01
 
 + Refactored the app, moving the Google Calendar and Unicorn HAT stuff to separate modules

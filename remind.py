@@ -14,10 +14,10 @@
 
     Google Calendar example code: https://developers.google.com/google-apps/calendar/quickstart/python
 ********************************************************************************************************************"""
-# TODO: Add option to ignore weekends
+# TODO: Implement weekend days as a config setting
 # TODO: Make search limit a config setting
-# TODO: Move reboot counter to remind.py
-# TODO: Use threads for call to Particle Cloud
+# TODO: Move reboot counter to remind.py (?)
+# TODO: Use threads for all calls to the Particle Cloud
 
 from __future__ import print_function
 
@@ -48,8 +48,8 @@ SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 
 # the config object properties, used when validating the config
 CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "display_meeting_summary", "device_id",
-                     "reboot_counter_limit", "reminder_only", "use_reboot_counter", "use_remote_notify",
-                     "use_working_hours", "work_start", "work_end"]
+                     "ignore_in_summary", "reboot_counter_limit", "reminder_only", "use_reboot_counter",
+                     "use_remote_notify", "use_working_hours", "work_start", "work_end"]
 
 # initialize the classes we'll use as globals
 cal = None  # Google Calendar
@@ -110,14 +110,24 @@ def processing_loop():
             # should we update a remote notify device?
             # Do this first since swirling the display takes longer
             if use_remote_notify:
-                #  TODO: Do this on a separate thread
                 # Only change the status if it's different than the current status
                 if calendar_status != previous_status:
                     logging.info('Setting Remote Notify status to {}'.format(calendar_status))
                     # Capture the current status for next time
                     previous_status = calendar_status
-                    # update the remote device status
-                    particle.set_status(calendar_status)
+                    try:
+                        # update the remote device status
+                        particle.set_status(calendar_status)
+                    except Exception as e:
+                        # Something went wrong, tell the user (just in case they have a monitor on the Pi)
+                        logging.error('Exception type: {}'.format(type(e)))
+                        # not much else we can do here except to skip this attempt and try again later
+                        logging.error('Error: {}'.format(sys.exc_info()[0]))
+                        # light up the array with FAILURE_COLOR LEDs to indicate a problem
+                        # unicorn.flash_all(1, 1, unicorn.FAILURE_COLOR)
+                        # now set the current_activity_light to FAILURE_COLOR to indicate an error state
+                        # with the last reading
+                        unicorn.set_activity_light(unicorn.FAILURE_COLOR, False)
 
             # Any meetings coming up in the next num_minutes minutes?
             if num_minutes > 0:
@@ -228,6 +238,7 @@ def main():
     try:
         cal = GoogleCalendar(
             config['busy_only'],
+            config['ignore_in_summary'],
             config['reminder_only'],
             use_reboot_counter,
             reboot_counter_limit,
