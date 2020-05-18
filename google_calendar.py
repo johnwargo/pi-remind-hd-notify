@@ -9,11 +9,13 @@ from status import Status
 import unicorn_hat as unicorn
 
 # other modules
+from dateutil import parser
 import logging
 import os
-import socket
 import pytz
-from dateutil import parser
+import socket
+import sys
+
 # from datetime import datetime
 # Google Calendar libraries
 import datetime
@@ -296,7 +298,7 @@ class GoogleCalendar:
                                         current_status = min(current_status, Status.TENTATIVE.value)
                         else:
                             # We're ignoring the event because it contains some strings we don't care about
-                            logging.info('Ignoring event: {}'.format(event.summary))
+                            logging.info('Ignoring event: {}'.format(event_summary))
 
                 # start processing our lists
                 # do we have any upcoming events?

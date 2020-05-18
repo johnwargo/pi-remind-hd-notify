@@ -17,7 +17,7 @@
 # TODO: Implement weekend days as a config setting
 # TODO: Make search limit a config setting
 # TODO: Move reboot counter to remind.py (?)
-# TODO: Use threads for calls to the Particle Cloud
+# TODO: Use threads for all calls to the Particle Cloud
 
 from __future__ import print_function
 
@@ -110,7 +110,6 @@ def processing_loop():
             # should we update a remote notify device?
             # Do this first since swirling the display takes longer
             if use_remote_notify:
-                #  TODO: Do this on a separate thread
                 # Only change the status if it's different than the current status
                 if calendar_status != previous_status:
                     logging.info('Setting Remote Notify status to {}'.format(calendar_status))
