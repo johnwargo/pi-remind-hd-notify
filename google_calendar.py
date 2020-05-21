@@ -16,6 +16,7 @@ import pytz
 import socket
 import sys
 import time
+import traceback
 
 # from datetime import datetime
 # Google Calendar libraries
@@ -239,7 +240,7 @@ class GoogleCalendar:
             # reset the reboot counter, since everything worked so far
             reboot_counter = 0
             logging.info('Resetting the reboot counter ({})'.format(reboot_counter))
-            
+
             # Did we get any events back?
             if not event_list:
                 # no? so nothing to do right now
@@ -263,6 +264,11 @@ class GoogleCalendar:
                     if start:
                         # get our event summary string
                         event_summary = event['summary'] if 'summary' in event else 'no title'
+                        # clockwise events have an icon in the start of the summary
+                        # and that was causing an encoding error, so I added this to resolve it
+                        event_summary = event_summary.encode('ascii', errors='ignore').strip()
+                        logging.debug('Event summary: {}'.format(event_summary))
+
                         # is this one of the events we're support to just ignore?
                         if not self.ignore_event(event_summary.lower()):
                             # When does the appointment start?
@@ -317,6 +323,14 @@ class GoogleCalendar:
             logging.error('Exception type: {}'.format(type(e)))
             # not much else we can do here except to skip this attempt and try again later
             logging.error('Error: {}'.format(sys.exc_info()[0]))
+
+            # experimenting with a different way to output exception details
+            logging.info('print_exc()')
+            traceback.print_exc(file=sys.stdout)
+            # Another way to output exception details
+            logging.info('print_exc(1)')
+            traceback.print_exc(limit=1, file=sys.stdout)
+
             # light up the array with FAILURE_COLOR LEDs to indicate a problem
             unicorn.flash_all(1, 2, unicorn.FAILURE_COLOR)
             # now set the current_activity_light to FAILURE_COLOR to indicate an error state
@@ -336,5 +350,5 @@ class GoogleCalendar:
                         logging.info('Rebooting in {} seconds'.format(i))
                         time.sleep(1)
                     os.system("sudo reboot")
-        # have to return something here, so making some guesses
+        # we have to return something here, so making some guesses
         return -1, '', Status.OFF
