@@ -251,7 +251,7 @@ def main():
 
         # Set the timeout for the rest of the Google API calls.
         # need this at its default during the registration process.
-        socket.setdefaulttimeout(10)  # 10 seconds
+        socket.setdefaulttimeout(5)  # seconds
 
     except Exception as e:
         logging.error('Remind: Unable to initialize Google Calendar API')
