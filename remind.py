@@ -26,10 +26,12 @@ from google_calendar import GoogleCalendar
 from particle import *
 from status import Status
 import unicorn_hat as unicorn
+
 #  Other imports
 import datetime
 import json
 import logging
+import socket
 import sys
 import time
 
@@ -246,6 +248,11 @@ def main():
             config['work_start'],
             config['work_end'],
         )
+
+        # Set the timeout for the rest of the Google API calls.
+        # need this at its default during the registration process.
+        socket.setdefaulttimeout(10)  # 10 seconds
+
     except Exception as e:
         logging.error('Remind: Unable to initialize Google Calendar API')
         logging.error('Exception type: {}'.format(type(e)))
