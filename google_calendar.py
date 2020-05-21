@@ -238,7 +238,8 @@ class GoogleCalendar:
             self._has_error = False
             # reset the reboot counter, since everything worked so far
             reboot_counter = 0
-
+            logging.info('Resetting the reboot counter ({})'.format(reboot_counter))
+            
             # Did we get any events back?
             if not event_list:
                 # no? so nothing to do right now
