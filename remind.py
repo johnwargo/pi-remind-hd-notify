@@ -30,7 +30,6 @@ import unicorn_hat as unicorn
 
 #  Other imports
 import datetime
-import json
 import logging
 import socket
 import sys
@@ -49,11 +48,6 @@ FIRST_THRESHOLD = 5  # minutes, WHITE lights before this
 # RED for anything less than (and including) the second threshold
 SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 
-# the config object properties, used when validating the config
-CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "display_meeting_summary", "device_id",
-                     "ignore_in_summary", "reboot_counter_limit", "reminder_only", "use_reboot_counter",
-                     "use_remote_notify", "use_working_hours", "work_start", "work_end"]
-
 # initialize the classes we'll use as globals
 cal = None  # Google Calendar
 particle = None  # Particle Cloud
@@ -62,22 +56,6 @@ debug_mode = False
 display_meeting_summary = True
 # whether or not you have a remote notify device connected. Use the config file to override
 use_remote_notify = False
-
-
-def validate_config(config_object):
-    # Returns a lit of missing attributes for the object
-    # These logging statements are info because debug won't be set until after
-    # the app validates the config file
-    logging.debug('Validating configuration file')
-    res = []
-    for i, val in enumerate(CONFIG_PROPERTIES):
-        try:
-            prop = config_object[val]
-            logging.info("Config: {}: {}".format(val, prop))
-        except KeyError:
-            logging.info("Config: {}: MISSING".format(val))
-            res.append(val)
-    return len(res) < 1, ','.join(res)
 
 
 def processing_loop():
@@ -188,11 +166,7 @@ def main():
     print(HASHES)
     print('From: ' + PROJECT_URL + '\n')
 
-    logging.info('Remind: Opening project configuration file (config.json)')
-    # Read the config file contents
-    # https://martin-thoma.com/configuration-files-in-python/
-    with open("config.json") as json_data_file:
-        config = json.load(json_data_file)
+
     #  did the config read correctly?
     if config:
         valid_config, config_errors = validate_config(config)
