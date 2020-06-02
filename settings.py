@@ -56,28 +56,59 @@ class Settings:
                 if self.validate_config(config):
                     # then populate the local variables with the values
                     _has_config = True
-                    _busy_only = config['busy_only']
-                    _debug_mode = config['debug_mode']
-                    _display_meeting_summary = config['display_meeting_summary']
-                    _ignore_in_summary = config['ignore_in_summary']
-                    _reminder_only = config['reminder_only']
-                    _use_reboot_counter = config['use_reboot_counter']
-                    _reboot_counter_limit = config['reboot_counter_limit']
-                    _use_remote_notify = config['use_remote_notify']
-                    _use_working_hours = config['use_working_hours']
+                    _busy_only = self.get_config_value(config, 'busy_only', False)
+                    _debug_mode = self.get_config_value(config, 'debug_mode', False)
+                    _display_meeting_summary = self.get_config_value(config, 'display_meeting_summary', True)
+                    _ignore_in_summary = self.get_config_value(config, 'ignore_in_summary', [])
+                    _reminder_only = self.get_config_value(config, 'reminder_only', False)
+                    _use_reboot_counter = self.get_config_value(config, 'use_reboot_counter', False)
+                    _reboot_counter_limit = self.get_config_value(config, 'reboot_counter_limit', 10)
+                    _use_remote_notify = self.get_config_value(config, 'use_remote_notify', False)
+                    _use_working_hours = self.get_config_value(config, 'use_working_hours', False)
                     # if remote notify is enabled, that's the only time we need...
                     if _use_remote_notify:
-                        _access_token = config['access_token']
-                        _device_id = config['device_id']
+                        _access_token = self.get_config_value(config, 'access_token', "")
+                        _device_id = self.get_config_value(config, 'device_id', "")
                     if _use_working_hours:
                         # if working hours are enabled, that's the only time we need...
-                        work_start = config['work_start']
-                        work_end = config['work_end']
+                        work_start = self.get_config_value(config, 'work_start', "8:00")
+                        work_end = self.get_config_value(config, 'work_end', "17:30")
                         # convert the time string to a time value
                         _work_start = datetime.datetime.strptime(work_start, '%H:%M').time()
                         _work_end = datetime.datetime.strptime(work_end, '%H:%M').time()
+                # _busy_only = self.get_config_value(config, 'busy_only', False)
+                # _debug_mode = config['debug_mode']
+                # _display_meeting_summary = config['display_meeting_summary']
+                # _ignore_in_summary = config['ignore_in_summary']
+                # _reminder_only = config['reminder_only']
+                # _use_reboot_counter = config['use_reboot_counter']
+                # _reboot_counter_limit = config['reboot_counter_limit']
+                # _use_remote_notify = config['use_remote_notify']
+                # _use_working_hours = config['use_working_hours']
+                # # if remote notify is enabled, that's the only time we need...
+                # if _use_remote_notify:
+                #     _access_token = config['access_token']
+                #     _device_id = config['device_id']
+                # if _use_working_hours:
+                #     # if working hours are enabled, that's the only time we need...
+                #     work_start = config['work_start']
+                #     work_end = config['work_end']
+                #     # convert the time string to a time value
+                #     _work_start = datetime.datetime.strptime(work_start, '%H:%M').time()
+                #     _work_end = datetime.datetime.strptime(work_end, '%H:%M').time()
         else:
             logging.info('Using existing Settings class')
+
+    @staticmethod
+    def get_config_value(config_object, key, default_value):
+        try:
+            value = config_object[key]
+            if value:
+                return value
+            else:
+                return default_value
+        except KeyError:
+            return default_value
 
     @staticmethod
     def get_instance():
@@ -105,6 +136,7 @@ class Settings:
     def get_access_token(self):
         # don't do anything if we don't have a config file read
         assert self._has_config, CONFIG_ERROR
+        assert self._use_remote_notify, "Remote Notify disabled"
         return self._access_token
 
     def get_busy_only(self):
@@ -115,6 +147,7 @@ class Settings:
     def get_device_id(self):
         # don't do anything if we don't have a config file read
         assert self._has_config, CONFIG_ERROR
+        assert self._use_remote_notify, "Remote Notify disabled"
         return self._device_id
 
     def get_display_meeting_summary(self):
@@ -140,6 +173,7 @@ class Settings:
     def get_reboot_counter_limit(self):
         # don't do anything if we don't have a config file read
         assert self._has_config, CONFIG_ERROR
+        assert self._use_reboot_counter, "Reboot counter disabled"
         return self._reboot_counter_limit
 
     def get_use_remote_notify(self):
@@ -160,9 +194,11 @@ class Settings:
     def get_work_start(self):
         # don't do anything if we don't have a config file read
         assert self._has_config, CONFIG_ERROR
+        assert self._use_working_hours, "Working hours disabled"
         return self._work_start
 
     def get_work_end(self):
         # don't do anything if we don't have a config file read
         assert self._has_config, CONFIG_ERROR
+        assert self._use_working_hours, "Working hours disabled"
         return self._work_end
