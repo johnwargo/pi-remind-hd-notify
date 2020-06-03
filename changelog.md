@@ -1,5 +1,9 @@
 # Changelog
 
+## 2020-06-03
+
+Created a Settings class and abstracted all config options there. This makes the code less klunky. I originally read all the config settings in `remind.py` then passed them to the google calendar module during init. That was fine when I only had one or two settings to pass there, but ridiculous after I'd added so many. 
+
 ## 2020-05-21
 
 Fixed a bug I created through the refactor. if the Pi loses network connectivity, the app crashed spectacularly. It turns out that I forgot to return a value from the Try/Catch (which I added back in this release)
