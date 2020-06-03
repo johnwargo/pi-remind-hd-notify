@@ -19,6 +19,7 @@ CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "display_meeting
 class Settings:
     # singleton instance of this class
     __instance = None
+    config = {}
     # Initialize the variable that tells everyone that we have a loaded config file
     _has_config: bool = False
 
@@ -116,7 +117,7 @@ class Settings:
             Settings()
         return Settings.__instance
 
-    def validate_config(self, config_object):
+    def validate_config(self):
         # don't do anything if we don't have a config file read
         assert self._has_config, CONFIG_ERROR
         # Returns a list of missing attributes for the object

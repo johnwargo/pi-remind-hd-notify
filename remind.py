@@ -25,6 +25,7 @@ from __future__ import print_function
 # This project's imports (local modules)
 from google_calendar import GoogleCalendar
 from particle import *
+from settings import *
 from status import Status
 import unicorn_hat as unicorn
 
@@ -166,35 +167,29 @@ def main():
     print(HASHES)
     print('From: ' + PROJECT_URL + '\n')
 
-
-    #  did the config read correctly?
-    if config:
-        valid_config, config_errors = validate_config(config)
-        if valid_config:
-            logging.info('Remind: Configuration file is valid')
-            display_meeting_summary = config['display_meeting_summary']
-            use_remote_notify = config['use_remote_notify']
-            use_reboot_counter = config['use_reboot_counter']
-            reboot_counter_limit = config['reboot_counter_limit']
-        else:
-            logging.error('Remind: The configuration file is missing one or more properties')
-            logging.error('Missing values: ' + config_errors)
-            logging.error(CONFIG_ERROR_STR)
-            sys.exit(0)
+    settings = Settings.get_instance()
+    valid_config, config_errors = settings.validate_config()
+    if valid_config:
+        logging.info('Remind: Configuration file is valid')
+        display_meeting_summary = settings.get_display_meeting_summary()
+        use_remote_notify = settings.get_use_remote_notify()
+        use_reboot_counter = settings.get_use_reboot_counter()
+        reboot_counter_limit = settings.get_reboot_counter_limit()
     else:
-        logging.error('Remind: Unable to read the configuration file')
+        logging.error('Remind: The configuration file is missing one or more properties')
+        logging.error('Missing values: ' + config_errors)
         logging.error(CONFIG_ERROR_STR)
         sys.exit(0)
 
-    debug_mode = config['debug_mode']
+    debug_mode = settings.get_debug_mode()
     if debug_mode:
         logging.info('Remind: Enabling debug mode')
         logger.setLevel(logging.DEBUG)
 
     if use_remote_notify:
         logging.info('Remind: Remote Notify Enabled')
-        access_token = config['access_token']
-        device_id = config['device_id']
+        access_token = settings.get_access_token()
+        device_id = settings.get_device_id()
         # Check to see if the string values we need are populated
         if len(access_token) < 1 or len(device_id) < 1:
             logging.error('One or more values are missing from the project configuration file')
@@ -213,17 +208,7 @@ def main():
 
     logging.info('Remind: Initializing Google Calendar interface')
     try:
-        cal = GoogleCalendar(
-            config['busy_only'],
-            config['ignore_in_summary'],
-            config['reminder_only'],
-            use_reboot_counter,
-            reboot_counter_limit,
-            config['use_working_hours'],
-            config['work_start'],
-            config['work_end'],
-        )
-
+        cal = GoogleCalendar()
         # Set the timeout for the rest of the Google API calls.
         # need this at its default during the registration process.
         socket.setdefaulttimeout(5)  # seconds
