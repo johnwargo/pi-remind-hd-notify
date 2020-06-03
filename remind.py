@@ -18,7 +18,6 @@
 # TODO: Make search limit a config setting
 # TODO: Move reboot counter to remind.py (?)
 # TODO: Use threads for all calls to the Particle Cloud
-# TODO: passing config options to the Calendar is klunky, just load the config in each module that uses it
 
 from __future__ import print_function
 
