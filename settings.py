@@ -3,6 +3,7 @@
 #
 # Abstracts out all functions related to app configuration
 ###########################################################
+# Singleton example https://gist.github.com/pazdera/1098129
 
 import datetime
 import logging
@@ -54,7 +55,7 @@ class Settings:
             #  did the config read correctly?
             if config:
                 # make sure all the required settings are in there
-                if self.validate_config(config):
+                if self.validate_config():
                     # then populate the local variables with the values
                     _has_config = True
                     _busy_only = self.get_config_value(config, 'busy_only', False)
@@ -66,10 +67,21 @@ class Settings:
                     _reboot_counter_limit = self.get_config_value(config, 'reboot_counter_limit', 10)
                     _use_remote_notify = self.get_config_value(config, 'use_remote_notify', False)
                     _use_working_hours = self.get_config_value(config, 'use_working_hours', False)
+                    logging.debug('Busy only: {}'.format(_busy_only))
+                    logging.debug('Debug Mode: {}'.format(_debug_mode))
+                    logging.debug('Display Meeting Summary: {}'.format(_display_meeting_summary))
+                    logging.debug('Ignore in Meeting Summary: {}'.format(_ignore_in_summary))
+                    logging.debug('Reminder Only: {}'.format(_reminder_only))
+                    logging.debug('Use Reboot Counter: {}'.format(_use_reboot_counter))
+                    logging.debug('Reboot Counter Limit: {}'.format(_reboot_counter_limit))
+                    logging.debug('Use Remote Notify: {}'.format(_use_remote_notify))
                     # if remote notify is enabled, that's the only time we need...
                     if _use_remote_notify:
                         _access_token = self.get_config_value(config, 'access_token', "")
                         _device_id = self.get_config_value(config, 'device_id', "")
+                        logging.debug('Access Token: {}'.format(_access_token))
+                        logging.debug('Device ID: {}'.format(_device_id))
+                    logging.debug('Use Working Hours: {}'.format(_use_working_hours))
                     if _use_working_hours:
                         # if working hours are enabled, that's the only time we need...
                         work_start = self.get_config_value(config, 'work_start', "8:00")
@@ -77,6 +89,8 @@ class Settings:
                         # convert the time string to a time value
                         _work_start = datetime.datetime.strptime(work_start, '%H:%M').time()
                         _work_end = datetime.datetime.strptime(work_end, '%H:%M').time()
+                        logging.debug('Work Start: {}'.format(_work_start))
+                        logging.debug('Work End: {}'.format(_work_end))
                 # _busy_only = self.get_config_value(config, 'busy_only', False)
                 # _debug_mode = config['debug_mode']
                 # _display_meeting_summary = config['display_meeting_summary']
