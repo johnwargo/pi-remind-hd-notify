@@ -15,22 +15,22 @@
     Google Calendar example code: https://developers.google.com/google-apps/calendar/quickstart/python
 ********************************************************************************************************************"""
 # TODO: Implement weekend days as a config setting
+# TODO: Add option to ignore declined events
 # TODO: Make search limit a config setting
-# TODO: Move reboot counter to remind.py (?)
 # TODO: Use threads for all calls to the Particle Cloud
-# TODO: passing config options to the Calendar is klunky, just load the config in each module that uses it
+# TODO: Use threads for all display updates
 
 from __future__ import print_function
 
 # This project's imports (local modules)
 from google_calendar import GoogleCalendar
 from particle import *
+from settings import *
 from status import Status
 import unicorn_hat as unicorn
 
 #  Other imports
 import datetime
-import json
 import logging
 import socket
 import sys
@@ -49,11 +49,6 @@ FIRST_THRESHOLD = 5  # minutes, WHITE lights before this
 # RED for anything less than (and including) the second threshold
 SECOND_THRESHOLD = 2  # minutes, YELLOW lights before this
 
-# the config object properties, used when validating the config
-CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "display_meeting_summary", "device_id",
-                     "ignore_in_summary", "reboot_counter_limit", "reminder_only", "use_reboot_counter",
-                     "use_remote_notify", "use_working_hours", "work_start", "work_end"]
-
 # initialize the classes we'll use as globals
 cal = None  # Google Calendar
 particle = None  # Particle Cloud
@@ -62,22 +57,6 @@ debug_mode = False
 display_meeting_summary = True
 # whether or not you have a remote notify device connected. Use the config file to override
 use_remote_notify = False
-
-
-def validate_config(config_object):
-    # Returns a lit of missing attributes for the object
-    # These logging statements are info because debug won't be set until after
-    # the app validates the config file
-    logging.debug('Validating configuration file')
-    res = []
-    for i, val in enumerate(CONFIG_PROPERTIES):
-        try:
-            prop = config_object[val]
-            logging.info("Config: {}: {}".format(val, prop))
-        except KeyError:
-            logging.info("Config: {}: MISSING".format(val))
-            res.append(val)
-    return len(res) < 1, ','.join(res)
 
 
 def processing_loop():
@@ -188,39 +167,21 @@ def main():
     print(HASHES)
     print('From: ' + PROJECT_URL + '\n')
 
-    logging.info('Remind: Opening project configuration file (config.json)')
-    # Read the config file contents
-    # https://martin-thoma.com/configuration-files-in-python/
-    with open("config.json") as json_data_file:
-        config = json.load(json_data_file)
-    #  did the config read correctly?
-    if config:
-        valid_config, config_errors = validate_config(config)
-        if valid_config:
-            logging.info('Remind: Configuration file is valid')
-            display_meeting_summary = config['display_meeting_summary']
-            use_remote_notify = config['use_remote_notify']
-            use_reboot_counter = config['use_reboot_counter']
-            reboot_counter_limit = config['reboot_counter_limit']
-        else:
-            logging.error('Remind: The configuration file is missing one or more properties')
-            logging.error('Missing values: ' + config_errors)
-            logging.error(CONFIG_ERROR_STR)
-            sys.exit(0)
-    else:
-        logging.error('Remind: Unable to read the configuration file')
-        logging.error(CONFIG_ERROR_STR)
-        sys.exit(0)
+    settings = Settings.get_instance()
+    settings.validate_config_options()
 
-    debug_mode = config['debug_mode']
+    debug_mode = settings.get_debug_mode()
     if debug_mode:
         logging.info('Remind: Enabling debug mode')
         logger.setLevel(logging.DEBUG)
 
+    display_meeting_summary = settings.get_display_meeting_summary()
+
+    use_remote_notify = settings.get_use_remote_notify()
     if use_remote_notify:
         logging.info('Remind: Remote Notify Enabled')
-        access_token = config['access_token']
-        device_id = config['device_id']
+        access_token = settings.get_access_token()
+        device_id = settings.get_device_id()
         # Check to see if the string values we need are populated
         if len(access_token) < 1 or len(device_id) < 1:
             logging.error('One or more values are missing from the project configuration file')
@@ -234,34 +195,28 @@ def main():
         time.sleep(1)
         particle.set_status(Status.OFF.value)
 
+    # is the reboot counter in play?
+    use_reboot_counter = settings.get_use_reboot_counter()
     if use_reboot_counter:
+        # then get the reboot counter limit
+        reboot_counter_limit = settings.get_reboot_counter_limit()
+        # and tell the user the feature is enabled
         logging.info('Remind: Reboot enabled ({} retries)'.format(reboot_counter_limit))
 
     logging.info('Remind: Initializing Google Calendar interface')
-    try:
-        cal = GoogleCalendar(
-            config['busy_only'],
-            config['ignore_in_summary'],
-            config['reminder_only'],
-            use_reboot_counter,
-            reboot_counter_limit,
-            config['use_working_hours'],
-            config['work_start'],
-            config['work_end'],
-        )
-
-        # Set the timeout for the rest of the Google API calls.
-        # need this at its default during the registration process.
-        socket.setdefaulttimeout(5)  # seconds
-
-    except Exception as e:
-        logging.error('Remind: Unable to initialize Google Calendar API')
-        logging.error('Exception type: {}'.format(type(e)))
-        logging.error('Error: {}'.format(sys.exc_info()[0]))
-        unicorn.set_all(unicorn.FAILURE_COLOR)
-        time.sleep(5)
-        unicorn.off()
-        sys.exit(0)
+    # try:
+    cal = GoogleCalendar()
+    # Set the timeout for the rest of the Google API calls.
+    # need this at its default during the registration process.
+    socket.setdefaulttimeout(5)  # seconds
+    # except Exception as e:
+    #     logging.error('Remind: Unable to initialize Google Calendar API')
+    #     logging.error('Exception type: {}'.format(type(e)))
+    #     logging.error('Error: {}'.format(sys.exc_info()[0]))
+    #     unicorn.set_all(unicorn.FAILURE_COLOR)
+    #     time.sleep(5)
+    #     unicorn.off()
+    #     sys.exit(0)
 
     logging.info('Remind: Application initialized')
 

@@ -2,9 +2,12 @@
 # Calendar Module
 #
 # Exposes properties and methods for the Google Calendar
+# This isn't a Singleton because the app will never try
+# to load more than one instance of the class.
 ###########################################################
 
 # This project's imports (local modules)
+from settings import *
 from status import Status
 import unicorn_hat as unicorn
 
@@ -18,7 +21,6 @@ import sys
 import time
 import traceback
 
-# from datetime import datetime
 # Google Calendar libraries
 import datetime
 import pickle
@@ -41,49 +43,38 @@ class GoogleCalendar:
     # successful.
     _has_error = False
 
-    _busy_only = False
-    _display_meeting_summary = True
+    _busy_only = None
+    _display_meeting_summary = None
     _ignore_in_summary = []
-    _reminder_only = False
-    _use_reboot_counter = False
-    _reboot_counter_limit = 0
+    _reminder_only = None
+    _use_reboot_counter = None
+    _reboot_counter_limit = None
     _service = None
-    _use_work_hours = False
-    _work_start = ''
-    _work_end = ''
+    _use_work_hours = None
+    _work_start = None
+    _work_end = None
 
-    def __init__(self,
-                 busy_only,
-                 ignore_in_summary,
-                 reminder_only,
-                 use_reboot_counter,
-                 reboot_counter_limit,
-                 use_work_hours,
-                 work_start,
-                 work_end
-                 ):
+    def __init__(self):
         # Populate the local properties
-        self._busy_only = busy_only
-        self._ignore_in_summary = ignore_in_summary
-        self._reminder_only = reminder_only
-        self._use_reboot_counter = use_reboot_counter
-        self._reboot_counter_limit = reboot_counter_limit
-        self._use_work_hours = use_work_hours
-        if self._use_work_hours:
-            self._work_start = datetime.datetime.strptime(work_start, '%H:%M').time()
-            self._work_end = datetime.datetime.strptime(work_end, '%H:%M').time()
-            logging.debug('Work hours start: {}'.format(work_start))
-            logging.debug('Work hours end: {}'.format(work_end))
         logging.info('Calendar Initialization')
-        logging.info('Calendar: Busy Only: {}'.format(self._busy_only))
-        logging.info('Calendar: Ignore in Summary: {}'.format(self._ignore_in_summary))
-        logging.info('Calendar: Reminder Only: {}'.format(self._reminder_only))
-        logging.info('Calendar: Reboot Counter: {}'.format(self._use_reboot_counter))
-        if self._use_reboot_counter:
-            logging.info('Calendar: Reboot Counter Limit: {}'.format(self._reboot_counter_limit))
-        logging.info('Calendar: Use Work Hours: {}'.format(self._use_work_hours))
-        if self._use_work_hours:
-            logging.info('Work hours: {} to {}'.format(self._work_start, self._work_end))
+        settings = Settings.get_instance()
+        _busy_only = settings.get_busy_only()
+        logging.info('Calendar: Busy Only: {}'.format(_busy_only))
+        _ignore_in_summary = settings.get_ignore_in_summary()
+        logging.info('Calendar: Ignore in Summary: {}'.format(_ignore_in_summary))
+        _reminder_only = settings.get_reminder_only()
+        logging.info('Calendar: Reminder Only: {}'.format(_reminder_only))
+        _use_reboot_counter = settings.get_use_reboot_counter()
+        logging.info('Calendar: Reboot Counter: {}'.format(_use_reboot_counter))
+        if _use_reboot_counter:
+            _reboot_counter_limit = settings.get_reboot_counter_limit()
+            logging.info('Calendar: Reboot Counter Limit: {}'.format(_reboot_counter_limit))
+        _use_work_hours = settings.get_use_working_hours()
+        logging.info('Calendar: Use Work Hours: {}'.format(_use_work_hours))
+        if _use_work_hours:
+            _work_start = settings.get_work_start()
+            _work_end = settings.get_work_end()
+            logging.info('Work hours: {} to {}'.format(_work_start, _work_end))
 
         # Turn off logging of specific warnings
         logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
@@ -146,6 +137,7 @@ class GoogleCalendar:
         return False
 
     def ignore_event(self, event_summary):
+        # Do we have any strings to ignore?
         if len(self._ignore_in_summary) > 0:
             # loop through the ignore list
             for key in self._ignore_in_summary:
@@ -237,9 +229,10 @@ class GoogleCalendar:
             event_list = events_result.get('items', [])
             # initialize this here, setting it to true later if we encounter an error
             self._has_error = False
-            # reset the reboot counter, since everything worked so far
-            reboot_counter = 0
-            logging.info('Resetting the reboot counter ({})'.format(reboot_counter))
+            if reboot_counter > 0:
+                # reset the reboot counter, since everything worked so far
+                reboot_counter = 0
+                logging.info('Resetting the reboot counter ({})'.format(reboot_counter))
 
             # Did we get any events back?
             if not event_list:
@@ -255,8 +248,10 @@ class GoogleCalendar:
                 logging.info('Events returned: {}'.format(len(event_list)))
                 # loop through the events in the list
                 for event in event_list:
+                    print(event)
                     # write the event to the console
                     logging.debug('Event: {}'.format(event))
+                    print(2)
                     # we only care about events that have a start time
                     start = event['start'].get('dateTime')
                     # we only want events that have a start time (skips all day events)
