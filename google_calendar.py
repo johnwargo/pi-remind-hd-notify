@@ -2,6 +2,8 @@
 # Calendar Module
 #
 # Exposes properties and methods for the Google Calendar
+# This isn't a Singleton because the app will never try
+# to load more than one instance of the class.
 ###########################################################
 
 # This project's imports (local modules)
@@ -56,22 +58,17 @@ class GoogleCalendar:
         # Populate the local properties
         logging.info('Calendar Initialization')
         settings = Settings.get_instance()
-
         _busy_only = settings.get_busy_only()
         logging.info('Calendar: Busy Only: {}'.format(_busy_only))
-
         _ignore_in_summary = settings.get_ignore_in_summary()
         logging.info('Calendar: Ignore in Summary: {}'.format(_ignore_in_summary))
-
         _reminder_only = settings.get_reminder_only()
         logging.info('Calendar: Reminder Only: {}'.format(_reminder_only))
-
         _use_reboot_counter = settings.get_use_reboot_counter()
         logging.info('Calendar: Reboot Counter: {}'.format(_use_reboot_counter))
         if _use_reboot_counter:
             _reboot_counter_limit = settings.get_reboot_counter_limit()
             logging.info('Calendar: Reboot Counter Limit: {}'.format(_reboot_counter_limit))
-
         _use_work_hours = settings.get_use_working_hours()
         logging.info('Calendar: Use Work Hours: {}'.format(_use_work_hours))
         if _use_work_hours:
@@ -140,6 +137,7 @@ class GoogleCalendar:
         return False
 
     def ignore_event(self, event_summary):
+        # Do we have any strings to ignore?
         if len(self._ignore_in_summary) > 0:
             # loop through the ignore list
             for key in self._ignore_in_summary:
