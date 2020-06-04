@@ -167,14 +167,7 @@ def main():
     print('From: ' + PROJECT_URL + '\n')
 
     settings = Settings.get_instance()
-    valid_config, config_errors = settings.validate_config(False)
-    if valid_config:
-        logging.info('Remind: Configuration file is valid')
-    else:
-        logging.error('Remind: The configuration file is missing one or more properties')
-        logging.error('Missing values: ' + config_errors)
-        logging.error(CONFIG_ERROR_STR)
-        sys.exit(0)
+    settings.validate_config_options()
 
     debug_mode = settings.get_debug_mode()
     if debug_mode:
