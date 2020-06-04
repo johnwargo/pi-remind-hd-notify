@@ -25,6 +25,7 @@ class Settings:
     # singleton instance of this class
     __instance = None
 
+    # Class variables
     _busy_only = None
     _debug_mode = None
     _display_meeting_summary = None
@@ -191,24 +192,3 @@ class Settings:
     def get_work_end():
         assert Settings._use_working_hours is True, "Working hours disabled"
         return Settings._work_end
-
-# _busy_only = self.get_config_value(config, 'busy_only', False)
-# _debug_mode = config['debug_mode']
-# _display_meeting_summary = config['display_meeting_summary']
-# _ignore_in_summary = config['ignore_in_summary']
-# _reminder_only = config['reminder_only']
-# _use_reboot_counter = config['use_reboot_counter']
-# _reboot_counter_limit = config['reboot_counter_limit']
-# _use_remote_notify = config['use_remote_notify']
-# _use_working_hours = config['use_working_hours']
-# # if remote notify is enabled, that's the only time we need...
-# if _use_remote_notify:
-#     _access_token = config['access_token']
-#     _device_id = config['device_id']
-# if _use_working_hours:
-#     # if working hours are enabled, that's the only time we need...
-#     work_start = config['work_start']
-#     work_end = config['work_end']
-#     # convert the time string to a time value
-#     _work_start = datetime.datetime.strptime(work_start, '%H:%M').time()
-#     _work_end = datetime.datetime.strptime(work_end, '%H:%M').time()
