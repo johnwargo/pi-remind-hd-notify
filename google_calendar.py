@@ -52,29 +52,28 @@ class GoogleCalendar:
     _work_start = ''
     _work_end = ''
 
-    def __init__(self ):
+    def __init__(self):
         settings = Settings.get_instance()
         # Populate the local properties
+        logging.info('Calendar Initialization')
         self._busy_only = settings.get_busy_only()
+        logging.info('Calendar: Busy Only: {}'.format(self._busy_only))
         self._ignore_in_summary = settings.get_ignore_in_summary()
+        logging.info('Calendar: Ignore in Summary: {}'.format(self._ignore_in_summary))
         self._reminder_only = settings.get_reminder_only()
+        logging.info('Calendar: Reminder Only: {}'.format(self._reminder_only))
+
         self._use_reboot_counter = settings.get_use_reboot_counter()
-        self._reboot_counter_limit = settings.get_reboot_counter_limit()
-        self._use_work_hours = settings.get_use_work_hours()
+        logging.info('Calendar: Reboot Counter: {}'.format(self._use_reboot_counter))
+        if self._use_reboot_counter:
+            self._reboot_counter_limit = settings.get_reboot_counter_limit()
+            logging.info('Calendar: Reboot Counter Limit: {}'.format(self._reboot_counter_limit))
+
+        self._use_work_hours = settings.get_use_working_hours()
+        logging.info('Calendar: Use Work Hours: {}'.format(self._use_work_hours))
         if self._use_work_hours:
             self._work_start = settings.get_work_start()
             self._work_end = settings.get_work_end()
-            logging.debug('Work hours start: {}'.format(self._work_start))
-            logging.debug('Work hours end: {}'.format(self._work_end))
-        logging.info('Calendar Initialization')
-        logging.info('Calendar: Busy Only: {}'.format(self._busy_only))
-        logging.info('Calendar: Ignore in Summary: {}'.format(self._ignore_in_summary))
-        logging.info('Calendar: Reminder Only: {}'.format(self._reminder_only))
-        logging.info('Calendar: Reboot Counter: {}'.format(self._use_reboot_counter))
-        if self._use_reboot_counter:
-            logging.info('Calendar: Reboot Counter Limit: {}'.format(self._reboot_counter_limit))
-        logging.info('Calendar: Use Work Hours: {}'.format(self._use_work_hours))
-        if self._use_work_hours:
             logging.info('Work hours: {} to {}'.format(self._work_start, self._work_end))
 
         # Turn off logging of specific warnings

@@ -167,13 +167,9 @@ def main():
     print('From: ' + PROJECT_URL + '\n')
 
     settings = Settings.get_instance()
-    valid_config, config_errors = settings.validate_config()
+    valid_config, config_errors = settings.validate_config(False)
     if valid_config:
         logging.info('Remind: Configuration file is valid')
-        display_meeting_summary = settings.get_display_meeting_summary()
-        use_remote_notify = settings.get_use_remote_notify()
-        use_reboot_counter = settings.get_use_reboot_counter()
-        reboot_counter_limit = settings.get_reboot_counter_limit()
     else:
         logging.error('Remind: The configuration file is missing one or more properties')
         logging.error('Missing values: ' + config_errors)
@@ -185,6 +181,9 @@ def main():
         logging.info('Remind: Enabling debug mode')
         logger.setLevel(logging.DEBUG)
 
+    display_meeting_summary = settings.get_display_meeting_summary()
+
+    use_remote_notify = settings.get_use_remote_notify()
     if use_remote_notify:
         logging.info('Remind: Remote Notify Enabled')
         access_token = settings.get_access_token()
@@ -202,24 +201,28 @@ def main():
         time.sleep(1)
         particle.set_status(Status.OFF.value)
 
+    # is the reboot counter in play?
+    use_reboot_counter = settings.get_use_reboot_counter()
     if use_reboot_counter:
+        # then get the reboot counter limit
+        reboot_counter_limit = settings.get_reboot_counter_limit()
+        # and tell the user the feature is enabled
         logging.info('Remind: Reboot enabled ({} retries)'.format(reboot_counter_limit))
 
     logging.info('Remind: Initializing Google Calendar interface')
-    try:
-        cal = GoogleCalendar()
-        # Set the timeout for the rest of the Google API calls.
-        # need this at its default during the registration process.
-        socket.setdefaulttimeout(5)  # seconds
-
-    except Exception as e:
-        logging.error('Remind: Unable to initialize Google Calendar API')
-        logging.error('Exception type: {}'.format(type(e)))
-        logging.error('Error: {}'.format(sys.exc_info()[0]))
-        unicorn.set_all(unicorn.FAILURE_COLOR)
-        time.sleep(5)
-        unicorn.off()
-        sys.exit(0)
+    # try:
+    cal = GoogleCalendar()
+    # Set the timeout for the rest of the Google API calls.
+    # need this at its default during the registration process.
+    socket.setdefaulttimeout(5)  # seconds
+    # except Exception as e:
+    #     logging.error('Remind: Unable to initialize Google Calendar API')
+    #     logging.error('Exception type: {}'.format(type(e)))
+    #     logging.error('Error: {}'.format(sys.exc_info()[0]))
+    #     unicorn.set_all(unicorn.FAILURE_COLOR)
+    #     time.sleep(5)
+    #     unicorn.off()
+    #     sys.exit(0)
 
     logging.info('Remind: Application initialized')
 

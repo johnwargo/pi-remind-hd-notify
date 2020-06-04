@@ -9,12 +9,14 @@ import datetime
 import logging
 import json
 
-# string displayed by assert statment
+# string displayed by assert statement
 CONFIG_ERROR = 'Configuration data not available'
 # the config object properties, used when validating the config
 CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "display_meeting_summary", "device_id",
                      "ignore_in_summary", "reboot_counter_limit", "reminder_only", "use_reboot_counter",
                      "use_remote_notify", "use_working_hours", "work_start", "work_end"]
+# a place to hold the object from the config file
+_config = None
 
 
 class Settings:
@@ -22,10 +24,7 @@ class Settings:
     __instance = None
 
     def __init__(self):
-
-        # Initialize the variable that tells everyone that we have a loaded config file
-        # _has_config = False
-        self._config = None
+        global _config
         self._busy_only = None
         self._debug_mode = None
         self._display_meeting_summary = None
@@ -55,7 +54,7 @@ class Settings:
                 logging.info('Config file read')
                 logging.info('Config: {}'.format(_config))
                 # make sure all the required settings are in there
-                count, lst = self.validate_config()
+                count, lst = Settings.validate_config(True)
                 if count < 1:
                     logging.info('Config file validated')
                     _busy_only = self.get_config_value(_config, 'busy_only', False)
@@ -64,7 +63,6 @@ class Settings:
                     _ignore_in_summary = self.get_config_value(_config, 'ignore_in_summary', [])
                     _reminder_only = self.get_config_value(_config, 'reminder_only', False)
                     _use_reboot_counter = self.get_config_value(_config, 'use_reboot_counter', False)
-                    _reboot_counter_limit = self.get_config_value(_config, 'reboot_counter_limit', 10)
                     _use_remote_notify = self.get_config_value(_config, 'use_remote_notify', False)
                     _use_working_hours = self.get_config_value(_config, 'use_working_hours', False)
                     logging.info('Busy only: {}'.format(_busy_only))
@@ -72,8 +70,12 @@ class Settings:
                     logging.info('Display Meeting Summary: {}'.format(_display_meeting_summary))
                     logging.info('Ignore in Meeting Summary: {}'.format(_ignore_in_summary))
                     logging.info('Reminder Only: {}'.format(_reminder_only))
+
                     logging.info('Use Reboot Counter: {}'.format(_use_reboot_counter))
-                    logging.info('Reboot Counter Limit: {}'.format(_reboot_counter_limit))
+                    if _use_reboot_counter:
+                        _reboot_counter_limit = self.get_config_value(_config, 'reboot_counter_limit', 10)
+                        logging.info('Reboot Counter Limit: {}'.format(_reboot_counter_limit))
+
                     logging.info('Use Remote Notify: {}'.format(_use_remote_notify))
                     # if remote notify is enabled, that's the only time we need...
                     if _use_remote_notify:
@@ -82,6 +84,7 @@ class Settings:
                         logging.info('Access Token: {}'.format(_access_token))
                         logging.info('Device ID: {}'.format(_device_id))
                     logging.debug('Use Working Hours: {}'.format(_use_working_hours))
+
                     if _use_working_hours:
                         # if working hours are enabled, that's the only time we need...
                         work_start = self.get_config_value(_config, 'work_start', "8:00")
@@ -91,31 +94,36 @@ class Settings:
                         _work_end = datetime.datetime.strptime(work_end, '%H:%M').time()
                         logging.info('Work Start: {}'.format(_work_start))
                         logging.info('Work End: {}'.format(_work_end))
-                # _busy_only = self.get_config_value(config, 'busy_only', False)
-                # _debug_mode = config['debug_mode']
-                # _display_meeting_summary = config['display_meeting_summary']
-                # _ignore_in_summary = config['ignore_in_summary']
-                # _reminder_only = config['reminder_only']
-                # _use_reboot_counter = config['use_reboot_counter']
-                # _reboot_counter_limit = config['reboot_counter_limit']
-                # _use_remote_notify = config['use_remote_notify']
-                # _use_working_hours = config['use_working_hours']
-                # # if remote notify is enabled, that's the only time we need...
-                # if _use_remote_notify:
-                #     _access_token = config['access_token']
-                #     _device_id = config['device_id']
-                # if _use_working_hours:
-                #     # if working hours are enabled, that's the only time we need...
-                #     work_start = config['work_start']
-                #     work_end = config['work_end']
-                #     # convert the time string to a time value
-                #     _work_start = datetime.datetime.strptime(work_start, '%H:%M').time()
-                #     _work_end = datetime.datetime.strptime(work_end, '%H:%M').time()
         else:
             logging.info('Using existing Settings class')
 
-    def has_config(self):
-        return self._config is not None
+    @staticmethod
+    def get_instance():
+        if Settings.__instance is None:
+            Settings()
+        return Settings.__instance
+
+    @staticmethod
+    def validate_config(show_output):
+        global _config
+        # don't do anything if we don't have a config file read
+        assert _config is not None, CONFIG_ERROR
+        # Returns a list of missing attributes for the object
+        # These logging statements are info because debug won't be set until after
+        # the app validates the config file
+        logging.info('Validating configuration file')
+        res = []
+        for i, val in enumerate(CONFIG_PROPERTIES):
+            # logging.info('Key[{}]: {}'.format(i, val))
+            try:
+                prop = _config[val]
+                if show_output:
+                    logging.info("Config: {}: {}".format(val, prop))
+            except KeyError:
+                if show_output:
+                    logging.info("Config: {}: MISSING".format(val))
+                res.append(val)
+        return len(res) < 1, ','.join(res)
 
     @staticmethod
     def get_config_value(config_object, key, default_value):
@@ -129,95 +137,93 @@ class Settings:
         except KeyError:
             return default_value
 
-    @staticmethod
-    def get_instance():
-        if Settings.__instance is None:
-            Settings()
-        return Settings.__instance
-
-    def validate_config(self):
-        # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
-        # Returns a list of missing attributes for the object
-        # These logging statements are info because debug won't be set until after
-        # the app validates the config file
-        logging.info('Validating configuration file')
-        res = []
-        for i, val in enumerate(CONFIG_PROPERTIES):
-            try:
-                prop = self._config[val]
-                logging.info("Config: {}: {}".format(val, prop))
-            except KeyError:
-                logging.info("Config: {}: MISSING".format(val))
-                res.append(val)
-        return len(res) < 1, ','.join(res)
-
     def get_access_token(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
-        assert self._use_remote_notify, "Remote Notify disabled"
+        assert _config is not None, CONFIG_ERROR
+        assert self._use_remote_notify is True, "Remote Notify disabled"
         return self._access_token
 
     def get_busy_only(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
+        assert _config is not None, CONFIG_ERROR
         return self._busy_only
 
     def get_device_id(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
-        assert self._use_remote_notify, "Remote Notify disabled"
+        assert _config is not None, CONFIG_ERROR
+        assert self._use_remote_notify is True, "Remote Notify disabled"
         return self._device_id
 
     def get_display_meeting_summary(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
+        assert _config is not None, CONFIG_ERROR
         return self._display_meeting_summary
 
     def get_ignore_in_summary(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
+        assert _config is not None, CONFIG_ERROR
         return self._ignore_in_summary
 
     def get_reminder_only(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
+        assert _config is not None, CONFIG_ERROR
         return self._reminder_only
 
     def get_use_reboot_counter(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
+        assert _config is not None, CONFIG_ERROR
         return self._use_reboot_counter
 
     def get_reboot_counter_limit(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
-        assert self._use_reboot_counter, "Reboot counter disabled"
+        assert _config is not None, CONFIG_ERROR
+        assert self._use_reboot_counter is True, "Reboot counter disabled"
         return self._reboot_counter_limit
 
     def get_use_remote_notify(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
+        assert _config is not None, CONFIG_ERROR
         return self._use_remote_notify
 
     def get_debug_mode(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
+        assert _config is not None, CONFIG_ERROR
         return self._debug_mode
 
     def get_use_working_hours(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
+        assert _config is not None, CONFIG_ERROR
         return self._use_working_hours
 
     def get_work_start(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
-        assert self._use_working_hours, "Working hours disabled"
+        assert _config is not None, CONFIG_ERROR
+        assert self._use_working_hours is True, "Working hours disabled"
         return self._work_start
 
     def get_work_end(self):
         # don't do anything if we don't have a config file read
-        assert self.has_config(), CONFIG_ERROR
-        assert self._use_working_hours, "Working hours disabled"
+        assert _config is not None, CONFIG_ERROR
+        assert self._use_working_hours is True, "Working hours disabled"
         return self._work_end
+
+# _busy_only = self.get_config_value(config, 'busy_only', False)
+# _debug_mode = config['debug_mode']
+# _display_meeting_summary = config['display_meeting_summary']
+# _ignore_in_summary = config['ignore_in_summary']
+# _reminder_only = config['reminder_only']
+# _use_reboot_counter = config['use_reboot_counter']
+# _reboot_counter_limit = config['reboot_counter_limit']
+# _use_remote_notify = config['use_remote_notify']
+# _use_working_hours = config['use_working_hours']
+# # if remote notify is enabled, that's the only time we need...
+# if _use_remote_notify:
+#     _access_token = config['access_token']
+#     _device_id = config['device_id']
+# if _use_working_hours:
+#     # if working hours are enabled, that's the only time we need...
+#     work_start = config['work_start']
+#     work_end = config['work_end']
+#     # convert the time string to a time value
+#     _work_start = datetime.datetime.strptime(work_start, '%H:%M').time()
+#     _work_end = datetime.datetime.strptime(work_end, '%H:%M').time()
