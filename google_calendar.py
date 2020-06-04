@@ -247,8 +247,10 @@ class GoogleCalendar:
                 logging.info('Events returned: {}'.format(len(event_list)))
                 # loop through the events in the list
                 for event in event_list:
+                    print(event)
                     # write the event to the console
                     logging.debug('Event: {}'.format(event))
+                    print(2)
                     # we only care about events that have a start time
                     start = event['start'].get('dateTime')
                     # we only want events that have a start time (skips all day events)

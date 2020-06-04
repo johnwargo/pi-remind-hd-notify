@@ -15,8 +15,6 @@ CONFIG_ERROR = 'Configuration data not available'
 CONFIG_PROPERTIES = ["access_token", "busy_only", "debug_mode", "display_meeting_summary", "device_id",
                      "ignore_in_summary", "reboot_counter_limit", "reminder_only", "use_reboot_counter",
                      "use_remote_notify", "use_working_hours", "work_start", "work_end"]
-# a place to hold the object from the config file
-_config = None
 
 
 class Settings:
@@ -24,20 +22,37 @@ class Settings:
     __instance = None
 
     def __init__(self):
-        global _config
-        self._busy_only = None
-        self._debug_mode = None
-        self._display_meeting_summary = None
-        self._ignore_in_summary = None
-        self._reminder_only = None
-        self._use_remote_notify = None
-        self._access_token = None
-        self._device_id = None
-        self._use_reboot_counter = None
-        self._reboot_counter_limit = None
-        self._use_working_hours = None
-        self._work_end = None
-        self._work_start = None
+
+        # a place to hold the object from the config file
+        _config = None
+
+        _busy_only = None
+        _debug_mode = None
+        _display_meeting_summary = None
+        _ignore_in_summary = None
+        _reminder_only = None
+        _use_remote_notify = None
+        _access_token = None
+        _device_id = None
+        _use_reboot_counter = None
+        _reboot_counter_limit = None
+        _use_working_hours = None
+        _work_end = None
+        _work_start = None
+
+        # self._busy_only = None
+        # self._debug_mode = None
+        # self._display_meeting_summary = None
+        # self._ignore_in_summary = None
+        # self._reminder_only = None
+        # self._use_remote_notify = None
+        # self._access_token = None
+        # self._device_id = None
+        # self._use_reboot_counter = None
+        # self._reboot_counter_limit = None
+        # self._use_working_hours = None
+        # self._work_end = None
+        # self._work_start = None
 
         if Settings.__instance is None:
             # then we've not initialized yet
@@ -58,8 +73,6 @@ class Settings:
                 _ignore_in_summary = self.get_config_value(_config, 'ignore_in_summary', [])
                 _reminder_only = self.get_config_value(_config, 'reminder_only', False)
                 _use_reboot_counter = self.get_config_value(_config, 'use_reboot_counter', False)
-                _use_remote_notify = self.get_config_value(_config, 'use_remote_notify', False)
-                _use_working_hours = self.get_config_value(_config, 'use_working_hours', False)
                 logging.info('Busy only: {}'.format(_busy_only))
                 logging.info('Debug Mode: {}'.format(_debug_mode))
                 logging.info('Display Meeting Summary: {}'.format(_display_meeting_summary))
@@ -71,6 +84,7 @@ class Settings:
                     _reboot_counter_limit = self.get_config_value(_config, 'reboot_counter_limit', 10)
                     logging.info('Reboot Counter Limit: {}'.format(_reboot_counter_limit))
 
+                _use_remote_notify = self.get_config_value(_config, 'use_remote_notify', False)
                 logging.info('Use Remote Notify: {}'.format(_use_remote_notify))
                 # if remote notify is enabled, that's the only time we need...
                 if _use_remote_notify:
@@ -78,15 +92,16 @@ class Settings:
                     _device_id = self.get_config_value(_config, 'device_id', "")
                     logging.info('Access Token: {}'.format(_access_token))
                     logging.info('Device ID: {}'.format(_device_id))
-                logging.debug('Use Working Hours: {}'.format(_use_working_hours))
 
+                _use_working_hours = self.get_config_value(_config, 'use_working_hours', False)
+                logging.debug('Use Working Hours: {}'.format(_use_working_hours))
                 if _use_working_hours:
                     # if working hours are enabled, that's the only time we need...
-                    work_start = self.get_config_value(_config, 'work_start', "8:00")
-                    work_end = self.get_config_value(_config, 'work_end', "17:30")
                     # convert the time string to a time value
-                    _work_start = datetime.datetime.strptime(work_start, '%H:%M').time()
-                    _work_end = datetime.datetime.strptime(work_end, '%H:%M').time()
+                    _work_start = datetime.datetime.strptime(
+                        self.get_config_value(_config, 'work_start', "8:00"), '%H:%M').time()
+                    _work_end = datetime.datetime.strptime(
+                        self.get_config_value(_config, 'work_end', "17:30"), '%H:%M').time()
                     logging.info('Work Start: {}'.format(_work_start))
                     logging.info('Work End: {}'.format(_work_end))
         else:
@@ -120,14 +135,17 @@ class Settings:
 
     @staticmethod
     def get_config_value(config_object, key, default_value):
-        logging.info('get_config_value(_config, {}, {}'.format(key, default_value))
+        logging.info('get_config_value(_config, {}, {})'.format(key, default_value))
         try:
             value = config_object[key]
             if value:
+                print(value)
                 return value
             else:
+                print("using default")
                 return default_value
         except KeyError:
+            print("key error")
             return default_value
 
     def get_access_token(self):
@@ -136,6 +154,10 @@ class Settings:
 
     def get_busy_only(self):
         return self._busy_only
+
+    def get_debug_mode(self):
+        logging.info(self._debug_mode)
+        return self._debug_mode
 
     def get_device_id(self):
         assert self._use_remote_notify is True, "Remote Notify disabled"
@@ -159,9 +181,6 @@ class Settings:
 
     def get_use_remote_notify(self):
         return self._use_remote_notify
-
-    def get_debug_mode(self):
-        return self._debug_mode
 
     def get_use_working_hours(self):
         return self._use_working_hours
