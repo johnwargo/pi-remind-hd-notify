@@ -309,12 +309,12 @@ class GoogleCalendar:
             # not much else we can do here except to skip this attempt and try again later
             logging.error('Error: {}'.format(sys.exc_info()[0]))
 
-            # # experimenting with a different way to output exception details
-            # logging.info('print_exc()')
-            # traceback.print_exc(file=sys.stdout)
-            # # Another way to output exception details
-            # logging.info('print_exc(1)')
-            # traceback.print_exc(limit=1, file=sys.stdout)
+            # experimenting with a different way to output exception details
+            logging.info('print_exc()')
+            traceback.print_exc(file=sys.stdout)
+            # Another way to output exception details
+            logging.info('print_exc(1)')
+            traceback.print_exc(limit=1, file=sys.stdout)
 
             # light up the array with FAILURE_COLOR LEDs to indicate a problem
             unicorn.flash_all(1, 2, unicorn.FAILURE_COLOR)
