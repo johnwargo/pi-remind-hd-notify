@@ -43,38 +43,28 @@ class GoogleCalendar:
     # successful.
     _has_error = False
 
-    _busy_only = None
-    _display_meeting_summary = None
-    _ignore_in_summary = []
-    _reminder_only = None
-    _use_reboot_counter = None
-    _reboot_counter_limit = None
-    _service = None
-    _use_work_hours = None
-    _work_start = None
-    _work_end = None
-
     def __init__(self):
+
         # Populate the local properties
         logging.info('Calendar Initialization')
         settings = Settings.get_instance()
-        _busy_only = settings.get_busy_only()
-        logging.info('Calendar: Busy Only: {}'.format(_busy_only))
-        _ignore_in_summary = settings.get_ignore_in_summary()
-        logging.info('Calendar: Ignore in Summary: {}'.format(_ignore_in_summary))
-        _reminder_only = settings.get_reminder_only()
-        logging.info('Calendar: Reminder Only: {}'.format(_reminder_only))
-        _use_reboot_counter = settings.get_use_reboot_counter()
-        logging.info('Calendar: Reboot Counter: {}'.format(_use_reboot_counter))
-        if _use_reboot_counter:
-            _reboot_counter_limit = settings.get_reboot_counter_limit()
-            logging.info('Calendar: Reboot Counter Limit: {}'.format(_reboot_counter_limit))
-        _use_work_hours = settings.get_use_working_hours()
-        logging.info('Calendar: Use Work Hours: {}'.format(_use_work_hours))
-        if _use_work_hours:
-            _work_start = settings.get_work_start()
-            _work_end = settings.get_work_end()
-            logging.info('Work hours: {} to {}'.format(_work_start, _work_end))
+        self._busy_only = settings.get_busy_only()
+        logging.info('Calendar: Busy Only: {}'.format(self._busy_only))
+        self._ignore_in_summary = settings.get_ignore_in_summary()
+        logging.info('Calendar: Ignore in Summary: {}'.format(self._ignore_in_summary))
+        self._reminder_only = settings.get_reminder_only()
+        logging.info('Calendar: Reminder Only: {}'.format(self._reminder_only))
+        self._use_reboot_counter = settings.get_use_reboot_counter()
+        logging.info('Calendar: Reboot Counter: {}'.format(self._use_reboot_counter))
+        if self._use_reboot_counter:
+            self._reboot_counter_limit = settings.get_reboot_counter_limit()
+            logging.info('Calendar: Reboot Counter Limit: {}'.format(self._reboot_counter_limit))
+        self._use_work_hours = settings.get_use_working_hours()
+        logging.info('Calendar: Use Work Hours: {}'.format(self._use_work_hours))
+        if self._use_work_hours:
+            self._work_start = settings.get_work_start()
+            self._work_end = settings.get_work_end()
+            logging.info('Work hours: {} to {}'.format(self._work_start, self._work_end))
 
         # Turn off logging of specific warnings
         logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
@@ -319,12 +309,12 @@ class GoogleCalendar:
             # not much else we can do here except to skip this attempt and try again later
             logging.error('Error: {}'.format(sys.exc_info()[0]))
 
-            # experimenting with a different way to output exception details
-            logging.info('print_exc()')
-            traceback.print_exc(file=sys.stdout)
-            # Another way to output exception details
-            logging.info('print_exc(1)')
-            traceback.print_exc(limit=1, file=sys.stdout)
+            # # experimenting with a different way to output exception details
+            # logging.info('print_exc()')
+            # traceback.print_exc(file=sys.stdout)
+            # # Another way to output exception details
+            # logging.info('print_exc(1)')
+            # traceback.print_exc(limit=1, file=sys.stdout)
 
             # light up the array with FAILURE_COLOR LEDs to indicate a problem
             unicorn.flash_all(1, 2, unicorn.FAILURE_COLOR)
@@ -332,7 +322,7 @@ class GoogleCalendar:
             # with the last reading
             unicorn.set_activity_light(unicorn.FAILURE_COLOR, False)
             # we have an error, so make note of it
-            self._has_error = True
+            _has_error = True
             # check to see if reboot is enabled
             if self._use_reboot_counter:
                 # increment the counter
