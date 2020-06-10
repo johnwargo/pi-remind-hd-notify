@@ -146,9 +146,17 @@ class GoogleCalendar:
         return self._work_start < event_time < self._work_end
 
     @staticmethod
+    def get_event_summary(event):
+        event_summary = event['summary'] if 'summary' in event else 'No Title'
+        # clockwise events have an icon in the start of the summary
+        # and that was causing an encoding error, so I added this to resolve it
+        event_summary = event_summary.encode('ascii', errors='ignore').strip()
+        return event_summary
+
+    @staticmethod
     def _process_upcoming_event(event, start, time_delta):
         logging.debug('_process_upcoming_event(event, {}, {})'.format(start, time_delta))
-        event_summary = event['summary'] if 'summary' in event else 'No Title'
+        event_summary = GoogleCalendar.get_event_summary(event)
         logging.info('Found event: {}'.format(event_summary))
         logging.info('Event starts: {}'.format(start))
         new_event = {
@@ -162,7 +170,8 @@ class GoogleCalendar:
         summary_list = []
         nearest_time = time_window
         for event in event_list:
-            summary_list.append(event['summary'] if 'summary' in event else 'No Title')
+            summary_list.append(GoogleCalendar.get_event_summary(event))
+            # summary_list.append(event['summary'] if 'summary' in event else 'No Title')
             # find the nearest (soonest) meeting time
             nearest_time = min(nearest_time, event['minutes_to_start'])
         return nearest_time, ', '.join(summary_list)
@@ -248,12 +257,7 @@ class GoogleCalendar:
                     # do we have a start time for this event?
                     if start:
                         # get our event summary string
-                        event_summary = event['summary'] if 'summary' in event else 'no title'
-                        # clockwise events have an icon in the start of the summary
-                        # and that was causing an encoding error, so I added this to resolve it
-                        event_summary = event_summary.encode('ascii', errors='ignore').strip()
-                        logging.debug('Event summary: {}'.format(event_summary))
-
+                        event_summary = GoogleCalendar.get_event_summary(event)
                         # is this one of the events we're support to just ignore?
                         if not self.ignore_event(event_summary.lower()):
                             # When does the appointment start?
