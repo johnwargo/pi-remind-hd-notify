@@ -1,5 +1,9 @@
 # Changelog
 
+## 2020-06-16
+
+Added a file logger (`remind_log`) to the project. With this change, output level to the console is controlled by the config setting, but the file logger always writes debug output. The code keeps 7 days of log files, rotating at midnight.
+
 ## 2020-06-03
 
 Created a Settings class and abstracted all config options there. This makes the code less klunky. I originally read all the config settings in `remind.py` then passed them to the google calendar module during init. That was fine when I only had one or two settings to pass there, but ridiculous after I'd added so many. 
