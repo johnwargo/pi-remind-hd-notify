@@ -32,6 +32,7 @@ import unicorn_hat as unicorn
 #  Other imports
 import datetime
 import logging
+from logging.handlers import TimedRotatingFileHandler
 import socket
 import sys
 import time
@@ -153,11 +154,20 @@ def processing_loop():
 def main():
     global cal, debug_mode, display_meeting_summary, particle, use_remote_notify
 
-    # Setup the logger
-    format = "%(asctime)s %(levelname)s %(message)s"
-    logging.basicConfig(format=format, level=logging.INFO,
-                        datefmt="%Y-%m-%d %H:%M:%S")
+    # Logging
+    # Setup the basic console logger
+    format_str = '%(asctime)s %(levelname)s %(message)s'
+    date_format = '%Y-%m-%d %H:%M:%S'
+    logging.basicConfig(format=format_str, level=logging.INFO, datefmt=date_format)
     logger = logging.getLogger()
+    # Add a file handler as well; roll at midnight and keep 7 copies
+    file_handler = TimedRotatingFileHandler("remind_log", when="midnight", backupCount=6)
+    log_formatter = logging.Formatter(format_str, datefmt=date_format)
+    file_handler.setFormatter(log_formatter)
+    # file log always gets debug; console log level set in the config
+    file_handler.setLevel(logging.DEBUG)
+    logger.addHandler(file_handler)
+
 
     # tell the user what we're doing...
     print('\n')
