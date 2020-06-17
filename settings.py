@@ -127,13 +127,10 @@ class Settings:
         try:
             value = config_object[key]
             if value:
-                print(value)
                 return value
             else:
-                print("using default")
                 return default_value
         except KeyError:
-            print("key error")
             return default_value
 
     @staticmethod
