@@ -100,10 +100,13 @@ class GoogleCalendar:
         # event is busy if transparency is missing from the event object
         try:
             if event['transparency']:
+                logging.debug('Not busy')
                 return False
             else:
+                logging.debug('Busy')
                 return True
         except KeyError:
+            logging.debug('Busy')
             return True
 
     @staticmethod
@@ -128,12 +131,14 @@ class GoogleCalendar:
         return False
 
     def ignore_event(self, event_summary):
+        logging.debug('ignore_event()')
         # Do we have any strings to ignore?
         if len(self._ignore_in_summary) > 0:
             # loop through the ignore list
             for key in self._ignore_in_summary:
                 # see if the ignore keyword is in the lower case summary
                 if key in event_summary:
+                    logging.debug('Ignoring this event')
                     return True
             return False
         else:
@@ -145,6 +150,14 @@ class GoogleCalendar:
         logging.debug('Event Time: {}'.format(event_time))
         # is the current time within working hours?
         return self._work_start < event_time < self._work_end
+
+    @staticmethod
+    def merge_status(current, new):
+        # Return the lowest status > 0 (1 busy, 2 tentative, 3 free)
+        if current < 1:
+            return new
+        else:
+            return min(current, new)
 
     @staticmethod
     def get_event_summary(event):
@@ -283,14 +296,20 @@ class GoogleCalendar:
                                 if self._busy_only:
                                     # then is the user marked busy for this event?
                                     if self._is_marked_busy(event):
+                                        logging.debug('Setting busy (1)')
                                         # add the event to our current event list
                                         current_status = Status.BUSY.value
+                                    # else use whatever the current status is
                                 else:
                                     if self._is_marked_busy(event):
+                                        logging.debug('Setting busy (2)')
                                         # add the event to our current event list
-                                        current_status = min(current_status, Status.BUSY.value)
+                                        current_status = Status.BUSY.value
                                     else:
-                                        current_status = min(current_status, Status.TENTATIVE.value)
+                                        logging.debug('Merging tentative')
+                                        # set it equal to the highest status (lowest status value)
+                                        current_status = GoogleCalendar.merge_status(
+                                            current_status, Status.TENTATIVE.value)
                         else:
                             # We're ignoring the event because it contains some strings we don't care about
                             logging.info('Ignoring event: {}'.format(event_summary))
