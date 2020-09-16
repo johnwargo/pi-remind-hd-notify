@@ -15,9 +15,8 @@
     Google Calendar example code: https://developers.google.com/google-apps/calendar/quickstart/python
 ********************************************************************************************************************"""
 # TODO: Implement weekend days as a config setting
-# TODO: Add option to ignore declined events
-# TODO: Make search limit a config setting
-# TODO: Use threads for all calls to the Particle Cloud
+# TODO: Add option to ignore declined events (not possible with the Calendar API today)
+# TODO: Make search limit a config setting (meh)
 # TODO: Use threads for all display updates
 
 from __future__ import print_function
