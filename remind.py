@@ -243,9 +243,9 @@ if __name__ == '__main__':
         # do our stuff
         main()
     except KeyboardInterrupt:
-        logging.info('\nStopped by user, exiting application\n')
+        logging.info('\n\nStopped by user, exiting application\n')
     except RuntimeError as err:
-        logging.error("Runtime Error: {0}".format(err))
+        logging.error("\n\nRuntime Error: {0}\n".format(err))
     finally:
         # turn off all the LEDs
         unicorn.off()
