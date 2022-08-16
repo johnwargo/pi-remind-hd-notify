@@ -92,7 +92,7 @@ def processing_loop():
             # should we update a remote notify device?
             # Do this first since swirling the display takes longer
             if use_remote_notify:
-                # Only change the status if it's different than the current status
+                # Only change the status if it's different from the current status
                 if calendar_status != previous_status:
                     logging.info('Setting Remote Notify status to {}'.format(calendar_status))
                     # Capture the current status for next time
@@ -135,7 +135,7 @@ def processing_loop():
                     # set the activity light to YELLOw as an indicator
                     unicorn.set_activity_light(unicorn.YELLOW, False)
                 else:
-                    # hmmm, less than 2 minutes, almost time to start!
+                    # hmm, less than 2 minutes, almost time to start!
                     # swirl the lights. Longer every second closer to start time
                     unicorn.do_swirl(int((4 - num_minutes) * 50))
                     if display_meeting_summary:
