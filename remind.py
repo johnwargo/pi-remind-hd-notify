@@ -6,7 +6,7 @@
 
     This application connects to a Google Calendar and determines whether there are any appointments in the next
     few minutes and flashes some LEDs if there are. The project uses a Raspberry Pi 2 device with a Pimoroni
-    Unicorn HAT HD (a 16x16 matrix of bright, multi-colored LEDs) to display an obnoxious reminder every minute,
+    Unicorn HAT HD (a 16x16 matrix of bright, multicolored LEDs) to display an obnoxious reminder every minute,
     changing color at 10 minutes (WHITE), 5 minutes (YELLOW) and 2 minutes (multi-color swirl).
 
     Coupled with the Remote Notify project, the server code sends appointment status to the remote notify device
