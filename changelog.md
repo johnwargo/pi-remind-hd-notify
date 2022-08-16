@@ -1,5 +1,10 @@
 # Changelog
 
+## 2022-08-16
+
+* Added runtime error handler to `remind.py`
+* Close log file on any error
+
 ## 2020-06-16
 
 Added a file logger (`remind_log`) to the project. With this change, output level to the console is controlled by the config setting, but the file logger always writes debug output. The code keeps 7 days of log files, rotating at midnight.

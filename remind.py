@@ -55,7 +55,7 @@ particle = None  # Particle Cloud
 
 debug_mode = False
 display_meeting_summary = True
-# whether or not you have a remote notify device connected. Use the config file to override
+# whether you have a remote notify device connected. Use the config file to override
 use_remote_notify = False
 
 
@@ -154,7 +154,7 @@ def main():
     global cal, debug_mode, display_meeting_summary, particle, use_remote_notify
 
     # Logging
-    # Setup the basic console logger
+    # Set up the basic console logger
     format_str = '%(asctime)s %(levelname)s %(message)s'
     date_format = '%Y-%m-%d %H:%M:%S'
     logging.basicConfig(format=format_str, level=logging.INFO, datefmt=date_format)
@@ -166,7 +166,6 @@ def main():
     # file log always gets debug; console log level set in the config
     file_handler.setLevel(logging.DEBUG)
     logger.addHandler(file_handler)
-
 
     # tell the user what we're doing...
     print('\n')
@@ -244,9 +243,13 @@ if __name__ == '__main__':
         # do our stuff
         main()
     except KeyboardInterrupt:
-        # turn off all of the LEDs
+        logging.info('\nStopped by user, exiting application\n')
+    except RuntimeError as err:
+        logging.error("Runtime Error: {0}".format(err))
+    finally:
+        # turn off all the LEDs
         unicorn.off()
-        # tell the user we're exiting
-        logging.info('\nExiting application\n')
+        # close the log, write all entries to disk
+        logging.shutdown()
         # exit the application
         sys.exit(0)
