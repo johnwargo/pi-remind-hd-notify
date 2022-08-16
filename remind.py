@@ -238,18 +238,13 @@ def main():
 
 if __name__ == '__main__':
     try:
-        # Initialize the Unicorn HAT
         unicorn.init()
-        # do our stuff
         main()
     except KeyboardInterrupt:
-        logging.info('\n\nStopped by user, exiting application\n')
+        logging.info('\n\nStopped by user, exiting...\n')
     except RuntimeError as err:
         logging.error("\n\nRuntime Error: {0}\n".format(err))
     finally:
-        # turn off all the LEDs
-        unicorn.off()
-        # close the log, write all entries to disk
-        logging.shutdown()
-        # exit the application
-        sys.exit(0)
+        unicorn.off()  # turn off all the LEDs
+        logging.shutdown()  # close the log, write all entries to disk
+        sys.exit(0)  # exit the application
