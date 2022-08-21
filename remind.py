@@ -211,20 +211,27 @@ def main():
         # and tell the user the feature is enabled
         logging.info('Remind: Reboot enabled ({} retries)'.format(reboot_counter_limit))
 
-    logging.info('Remind: Initializing Google Calendar interface')
-    try:
-        cal = GoogleCalendar()
-        # Set the timeout for the rest of the Google API calls.
-        # need this at its default during the registration process.
-        socket.setdefaulttimeout(5)  # seconds
-    except Exception as e:
-        logging.error('Remind: Unable to initialize Google Calendar API')
-        logging.error('Exception type: {}'.format(type(e)))
-        logging.error('Error: {}'.format(sys.exc_info()[0]))
-        unicorn.set_all(unicorn.FAILURE_COLOR)
-        time.sleep(5)
-        unicorn.off()
-        sys.exit(0)
+    # Check network connection before trying to initialize GoogleCalendar
+    while True:
+        logging.info('Remind: Initializing Google Calendar interface')
+        try:
+            cal = GoogleCalendar()
+            # Set the timeout for the rest of the Google API calls.
+            # need this at its default during the registration process.
+            socket.setdefaulttimeout(5)  # seconds
+            logging.info("Remind: Calendar initialized")
+            break  # get out of this loop
+        except Exception as e:
+            logging.error('Remind: Unable to initialize Google Calendar API')
+            logging.error('Exception type: {}'.format(type(e)))
+            logging.error('Error: {}\n'.format(sys.exc_info()[0]))
+            sys.exc_clear()
+            unicorn.set_all(unicorn.YELLOW)
+            time.sleep(5)
+            unicorn.off()
+        finally:
+            logging.info("Remind: Retrying in one minute")
+            time.sleep(55)
 
     logging.info('Remind: Application initialized')
 
